@@ -1,0 +1,18 @@
+feature,mean_abs_shap,mean_shap,is_policy,direction,label,eef_equivalent,is_artefact,eef_confirmed
+SC202Q10JA,0.80181646,-0.023891272,False,reduces_slope,School offers extracurricular academic support activities,Extending school time,False,True
+SC012Q05TA,0.6888664,-0.005137019,True,reduces_slope,Teachers use assessments to monitor student learning,Feedback,False,True
+SC212Q01JA,0.5932905,-0.011211836,False,reduces_slope,Principal provides instructional leadership,,False,False
+SC017Q09JA,0.59328777,-0.044286452,False,reduces_slope,School has clear and high academic expectations,Behaviour interventions,False,True
+SC012Q02TA,0.5570148,-0.022752732,True,reduces_slope,Teachers regularly give feedback to students,Feedback,False,True
+SC012Q08JA,0.55699337,-0.007840679,False,reduces_slope,Teachers adapt instruction to individual student needs,Individualised instruction,False,True
+SC172Q07JA,0.502039,-0.0016056073,False,reduces_slope,School offers additional support for struggling students,Small group tuition,False,True
+SC172Q05JA,0.48247498,-0.036201492,False,reduces_slope,School uses mixed-ability grouping within classes,Collaborative learning,False,True
+SC190Q02JA,0.4456808,-0.012879346,False,reduces_slope,School uses student data to improve teaching practices,Metacognition & self-regulation,False,True
+SC180Q01JA,0.43351468,-0.007813464,False,reduces_slope,School involves parents in educational decisions,Parental engagement,False,True
+SC017Q10JA,0.37355635,-0.01795024,False,reduces_slope,School promotes student self-regulation and autonomy,Metacognition & self-regulation,False,True
+SC004Q05NA,0.37034455,-0.0009427238,False,reduces_slope,Principal monitors teacher instructional practices,,False,False
+SC213Q02JA,0.35795292,-0.008620366,False,reduces_slope,School accepts students with special educational needs,,False,False
+SC188Q05JA,0.32224643,-0.0046318285,False,reduces_slope,School emphasises student wellbeing alongside academics,,False,False
+SC202Q09JA,0.29000303,-0.0062073283,False,reduces_slope,School offers after-school tutoring programmes,One to one tuition,False,True
+SC192Q01JA,0.20135048,-0.013567096,False,reduces_slope,School shares assessment results with parents regularly,Parental engagement,False,True
+SC016Q03TA,0.12739563,-0.0030335153,False,reduces_slope,Teachers receive regular professional development,Teaching assistant interventions,False,True
