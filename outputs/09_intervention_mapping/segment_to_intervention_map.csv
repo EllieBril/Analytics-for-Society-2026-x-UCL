@@ -1,0 +1,17 @@
+segment,category_rank,recommended_category,intervention,evidence,cost_rating,gap_reduction_pts,cost_effectiveness,rule_rationale
+Digitally constrained schools,1,resource_intensive,Teaching assistant interventions,3,3,14.0,3.11,Segment `Digitally constrained schools` maps to `resource_intensive` under transparent profile rules.
+Digitally constrained schools,2,learning_support,Metacognition & self-regulation,4,1,28.0,70.0,Segment `Digitally constrained schools` maps to `learning_support` under transparent profile rules.
+Digitally constrained schools,3,family_engagement,Parental engagement,4,1,14.0,35.0,Segment `Digitally constrained schools` maps to `family_engagement` under transparent profile rules.
+High-achievement unequal schools,1,learning_support,Metacognition & self-regulation,4,1,28.0,70.0,Segment `High-achievement unequal schools` maps to `learning_support` under transparent profile rules.
+High-achievement unequal schools,2,family_engagement,Parental engagement,4,1,14.0,35.0,Segment `High-achievement unequal schools` maps to `family_engagement` under transparent profile rules.
+High-achievement unequal schools,3,climate_support,Social & emotional learning,3,1,10.5,26.25,Segment `High-achievement unequal schools` maps to `climate_support` under transparent profile rules.
+Low-achievement broad support need,1,learning_support,Metacognition & self-regulation,4,1,28.0,70.0,Segment `Low-achievement broad support need` maps to `learning_support` under transparent profile rules.
+Low-achievement broad support need,2,family_engagement,Parental engagement,4,1,14.0,35.0,Segment `Low-achievement broad support need` maps to `family_engagement` under transparent profile rules.
+Low-achievement broad support need,3,climate_support,Social & emotional learning,3,1,10.5,26.25,Segment `Low-achievement broad support need` maps to `climate_support` under transparent profile rules.
+Mixed profile,1,learning_support,Metacognition & self-regulation,4,1,28.0,70.0,Segment `Mixed profile` maps to `learning_support` under transparent profile rules.
+Mixed profile,2,climate_support,Social & emotional learning,3,1,10.5,26.25,Segment `Mixed profile` maps to `climate_support` under transparent profile rules.
+Resilient equitable performers,1,learning_support,Metacognition & self-regulation,4,1,28.0,70.0,Segment `Resilient equitable performers` maps to `learning_support` under transparent profile rules.
+Resilient equitable performers,2,family_engagement,Parental engagement,4,1,14.0,35.0,Segment `Resilient equitable performers` maps to `family_engagement` under transparent profile rules.
+Strained high-inequality schools,1,climate_support,Social & emotional learning,3,1,10.5,26.25,Segment `Strained high-inequality schools` maps to `climate_support` under transparent profile rules.
+Strained high-inequality schools,2,learning_support,Metacognition & self-regulation,4,1,28.0,70.0,Segment `Strained high-inequality schools` maps to `learning_support` under transparent profile rules.
+Strained high-inequality schools,3,resource_intensive,Teaching assistant interventions,3,3,14.0,3.11,Segment `Strained high-inequality schools` maps to `resource_intensive` under transparent profile rules.

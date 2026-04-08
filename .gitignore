@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# macOS / editor noise
+.DS_Store
+.idea/
+.vscode/
+
+# Environments and secrets
+.env
+.env.*
+.venv/
+venv/
+
+# Streamlit local secrets
+.streamlit/secrets.toml
+
+# Raw data and bulky local-only archives
+*.SAV
+FLT_SPSS/
+archive/raw_archives/
+
+# Runtime caches and logs
+logs/.cache/
+logs/.mplconfig/
+archive/runtime_cache/
+
+# Derived heavy local artifacts
+outputs/05_analytic_dataset/_cache/
+outputs/05_analytic_dataset/*.parquet
+

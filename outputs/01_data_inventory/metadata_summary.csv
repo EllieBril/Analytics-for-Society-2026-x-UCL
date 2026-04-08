@@ -1,0 +1,17 @@
+dataset,file_type,path,readable,row_count,column_count,unit_of_observation,join_keys,year_coverage,n_years,country_count,n_unique_school_ids,n_unique_student_ids,n_unique_teacher_ids,notes
+country_trajectories,csv,country_trajectories.csv,True,61,6,country/year or aggregated,CNT,2022 or unknown,,61,,,,
+equity_gap_by_country_year,csv,equity_gap_by_country_year.csv,True,368,8,country/year or aggregated,"CNT, YEAR","2009, 2012, 2015, 2018, 2022",5,107,,,,
+escs_trend,csv,escs_trend/escs_trend.csv,True,1447787,10,student,"cnt, schoolid, studentid",2022 or unknown,,71,,,,
+intervention_library,csv,intervention_library.csv,True,24,7,country/year or aggregated,none,2022 or unknown,,,,,,
+pisa_school_all_years,csv,pisa_school_all_years.csv,True,98220,6,school,"CNT, SCHOOLID, YEAR","2009, 2012, 2015, 2018, 2022",5,104,29660,,,
+pisa_student_all_years,csv,pisa_student_all_years.csv,True,734122,11,student,"YEAR, CNT, SCHOOLID, STUDENTID","2009, 2012, 2015, 2018, 2022",5,107,28740,380485,,
+school_risk_scores,csv,school_risk_scores.csv,True,21629,8,school,"CNT, SCHOOLID",2022 or unknown,,80,21629,,,
+crt_cog,sav,CY08MSP_CRT_COG.SAV,True,499843,301,student,"CNT, CNTRYID, CNTSCHID, CNTSTUID, CYC",2022,1,80,,,,Metadata-only audit for large SAVs; key coverage inferred where sampling would require a full-file scan.
+flt_cog,sav,FLT_SPSS/CY08MSP_FLT_COG.SAV,True,97983,3637,student,"CNT, CNTRYID, CNTSCHID, CNTSTUID, CYC",2022,1,,,,,Metadata-only audit for large SAVs; key coverage inferred where sampling would require a full-file scan.
+flt_qqq,sav,FLT_SPSS/CY08MSP_FLT_QQQ.SAV,True,97983,1192,student,"CNT, CNTRYID, CNTSCHID, CNTSTUID, CYC",2022,1,,,,,Metadata-only audit for large SAVs; key coverage inferred where sampling would require a full-file scan.
+flt_tim,sav,FLT_SPSS/CY08MSP_FLT_TIM.SAV,True,97983,172,student,"CNT, CNTRYID, CNTSCHID, CNTSTUID, CYC",2022,1,,,,,Metadata-only audit for large SAVs; key coverage inferred where sampling would require a full-file scan.
+sch_qqq,sav,CY08MSP_SCH_QQQ.SAV,True,21629,431,school,"CNT, CNTRYID, CNTSCHID, CYC",2022,1,80,,,,Metadata-only audit for large SAVs; key coverage inferred where sampling would require a full-file scan.
+stu_cog,sav,CY08MSP_STU_COG.SAV,True,613744,5023,student,"CNT, CNTRYID, CNTSCHID, CNTSTUID, CYC",2022,1,80,,,,Metadata-only audit for large SAVs; key coverage inferred where sampling would require a full-file scan.
+stu_qqq,sav,CY08MSP_STU_QQQ.SAV,True,613744,1278,student,"CNT, CNTRYID, CNTSCHID, CNTSTUID, CYC",2022,1,80,,,,Metadata-only audit for large SAVs; key coverage inferred where sampling would require a full-file scan.
+stu_tim,sav,CY08MSP_STU_TIM.SAV,True,613744,172,student,"CNT, CNTRYID, CNTSCHID, CNTSTUID, CYC",2022,1,80,,,,Metadata-only audit for large SAVs; key coverage inferred where sampling would require a full-file scan.
+tch_qqq,sav,CY08MSP_TCH_QQQ.SAV,True,68054,543,teacher,"CNT, CNTRYID, CNTSCHID, CNTTCHID, CYC",2022,1,80,,,,Metadata-only audit for large SAVs; key coverage inferred where sampling would require a full-file scan.

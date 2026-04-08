@@ -1,0 +1,231 @@
+
+==============================================================
+PHASE 1 -- Load 2022 student data
+==============================================================
+Students       : 613,744
+Schools        : 21,629
+Countries      : 80
+PV cols used   : 10
+
+==============================================================
+PHASE 2 -- Load school questionnaire features
+==============================================================
+SC cols (raw)              : 363
+SC cols retained (<50% NA) : 363
+SC cols dropped (category) : 1
+SC cols for model          : 362  (numeric only)
+School questionnaire       : 21,629 schools x 363 SC vars
+
+==============================================================
+PHASE 3 -- K-means clustering within each country
+           k=min(5, n_schools//3) per country
+==============================================================
+SC cols for k-means        : 362
+Countries processed        : 80
+Total clusters created     : 400
+Avg clusters per country   : 5.0
+Avg schools per cluster    : 54.1
+Countries with k < 5         : 0
+
+==============================================================
+PHASE 4 -- Pool students per cluster, compute slope
+==============================================================
+Students matched to cluster: 613,744
+Students unmatched         : 0
+
+Cluster rows               : 400
+With valid slope           : 381 (95.2%)
+Dropped (<30 pooled students)  : 19
+Mean students per cluster  : 1471
+Median students per cluster: 1102
+Std slope                  : 14.16
+Mean slope                 : 28.54 pts/unit ESCS
+Median slope               : 29.47 pts/unit ESCS
+
+==============================================================
+PHASE 5 -- Join country covariates
+==============================================================
+GINI coverage  : 46%
+EDU_PCT cov.   : 74%
+GDP_PC cov.    : 91%
+
+Saved: cache/equitrack_panel_v7.parquet  (400 x 374 cols)
+
+==============================================================
+PHASE 6 -- Feature matrix (all SC features, no selection step)
+==============================================================
+Cluster rows   : 381 (vs 18,687 schools in v5)
+Features       : 369 total
+  SC features  : 362
+  Base         : 4 (N_SCHOOLS, N_STUDENTS, MEAN_ESCS, SD_ESCS)
+  Covariates   : 3 (GINI, EDU_PCT, LOG_GDP_PC)
+Target         : mean=28.54  median=29.47  std=14.14
+
+Primary evaluation: Grouped 10-fold CV (country-grouped, no within-country leakage)
+Hold-out R2 shown for reference only (n_test ~76).
+
+==============================================================
+PHASE 7 -- XGBoost model + Grouped 10-fold CV
+==============================================================
+Grouped 10-fold CV R2 : 0.487 +/- 0.081  [PRIMARY]
+Median CV R2       : 0.479
+Best  fold R2      : 0.622
+Worst fold R2      : 0.363
+
+5-fold CV R2       : 0.423 +/- 0.064  (ungrouped, reference)
+Hold-out R2        : 0.599  (n_test=77, reference only)
+Saved: reports/xgb_equity_slope_v7.json
+
+==============================================================
+PHASE 8 -- SHAP feature importance (full-data model)
+==============================================================
+Saved: reports/shap_importance_v7.csv
+
+Top 20 features by |SHAP|:
+  MEAN_ESCS              |SHAP|=3.395  reduces slope (better equity)
+  N_STUDENTS             |SHAP|=1.114  increases slope (worse equity)
+  LOG_GDP_PC             |SHAP|=0.734  increases slope (worse equity)
+  SC202Q10JA             |SHAP|=0.677  reduces slope (better equity)
+  N_SCHOOLS              |SHAP|=0.653  increases slope (worse equity)
+  SC213Q01JA             |SHAP|=0.509  increases slope (worse equity)
+  SC172Q05JA             |SHAP|=0.460  reduces slope (better equity)
+  SC172Q04JA             |SHAP|=0.433  increases slope (worse equity)
+  SC012Q08JA             |SHAP|=0.428  reduces slope (better equity)
+  SC012Q05TA             |SHAP|=0.416  increases slope (worse equity)  [POLICY]
+  SC212Q01JA             |SHAP|=0.393  increases slope (worse equity)
+  SC017Q09JA             |SHAP|=0.374  reduces slope (better equity)
+  SC172Q07JA             |SHAP|=0.342  reduces slope (better equity)
+  SC213Q02JA             |SHAP|=0.340  reduces slope (better equity)
+  SC188Q03JA             |SHAP|=0.333  increases slope (worse equity)
+  SCHAUTO                |SHAP|=0.333  increases slope (worse equity)
+  SC017Q10JA             |SHAP|=0.318  reduces slope (better equity)
+  SC190Q02JA             |SHAP|=0.304  reduces slope (better equity)
+  SC012Q02TA             |SHAP|=0.286  reduces slope (better equity)  [POLICY]
+  SC188Q05JA             |SHAP|=0.277  reduces slope (better equity)
+Saved: figures/shap_bar_v7.png
+Saved: figures/pred_vs_actual_v7.png
+Saved: figures/cluster_diagnostics_v7.png
+
+==============================================================
+PHASE 10 -- Intervention ranking
+==============================================================
+Saved: reports/intervention_ranking_v7.csv
+
+Top 15 SCHOOL-LEVEL interventions:
+Feature                Tier    |SHAP| Direction                    Efficiency
+----------------------------------------------------------------------------
+SC202Q10JA             MED      0.677 reduces slope(better)             0.226
+SC213Q01JA             MED      0.509 increases slope(worse)            0.170
+SC172Q05JA             MED      0.460 reduces slope(better)             0.153
+SC172Q04JA             MED      0.433 increases slope(worse)            0.144
+SC012Q08JA             MED      0.428 reduces slope(better)             0.143
+SC212Q01JA             MED      0.393 increases slope(worse)            0.131
+SC017Q09JA             MED      0.374 reduces slope(better)             0.125
+SC172Q07JA             MED      0.342 reduces slope(better)             0.114
+SC213Q02JA             MED      0.340 reduces slope(better)             0.113
+SC188Q03JA             MED      0.333 increases slope(worse)            0.111
+SCHAUTO                MED      0.333 increases slope(worse)            0.111
+SC017Q10JA             MED      0.318 reduces slope(better)             0.106
+SC190Q02JA             MED      0.304 reduces slope(better)             0.101
+SC188Q05JA             MED      0.277 reduces slope(better)             0.092
+SC190Q07JA             MED      0.273 reduces slope(better)             0.091
+
+Top POLICY findings (11 structural features):
+  SC012Q05TA             |SHAP|=0.416  increases slope
+  SC012Q02TA             |SHAP|=0.286  reduces slope
+  SCHLTYPE               |SHAP|=0.128  increases slope
+  SC012Q06TA             |SHAP|=0.066  reduces slope
+  SC004Q01TA             |SHAP|=0.060  increases slope
+  SC012Q04TA             |SHAP|=0.035  increases slope
+  SC012Q01TA             |SHAP|=0.032  increases slope
+  SC002Q02TA             |SHAP|=0.027  increases slope
+
+========================================================================
+VERSION COMPARISON
+========================================================================
+Ver   Metric                    Obs  Hold-out R2              CV R2        CV type
+-------------------------------------------------------------------------------
+  SC012Q04TA             |SHAP|=0.035  increases slope
+  SC012Q01TA             |SHAP|=0.032  increases slope
+  SC002Q02TA             |SHAP|=0.027  increases slope
+
+========================================================================
+VERSION COMPARISON
+========================================================================
+Ver   Metric                    Obs  Hold-out R2              CV R2        CV type
+-------------------------------------------------------------------------------
+  SC012Q01TA             |SHAP|=0.032  increases slope
+  SC002Q02TA             |SHAP|=0.027  increases slope
+
+========================================================================
+VERSION COMPARISON
+========================================================================
+Ver   Metric                    Obs  Hold-out R2              CV R2        CV type
+-------------------------------------------------------------------------------
+  SC002Q02TA             |SHAP|=0.027  increases slope
+
+========================================================================
+VERSION COMPARISON
+========================================================================
+Ver   Metric                    Obs  Hold-out R2              CV R2        CV type
+-------------------------------------------------------------------------------
+
+========================================================================
+VERSION COMPARISON
+========================================================================
+Ver   Metric                    Obs  Hold-out R2              CV R2        CV type
+-------------------------------------------------------------------------------
+========================================================================
+Ver   Metric                    Obs  Hold-out R2              CV R2        CV type
+-------------------------------------------------------------------------------
+v3    Quartile gap            3,590        0.250      0.243+/-0.026         5-fold
+v4    ESCS slope             53,249        0.168      0.132+/-0.024         5-fold
+v5    ESCS slope             18,687        0.211      0.123+/-0.038         5-fold
+v6    ESCS slope (clust)       ~435          ---          <0 (LOCO)   LOCO/87-fold
+v7    ESCS slope (clust)        381        0.599      0.487+/-0.081 grouped 10-fold
+v3    Quartile gap            3,590        0.250      0.243+/-0.026         5-fold
+v4    ESCS slope             53,249        0.168      0.132+/-0.024         5-fold
+v5    ESCS slope             18,687        0.211      0.123+/-0.038         5-fold
+v6    ESCS slope (clust)       ~435          ---          <0 (LOCO)   LOCO/87-fold
+v7    ESCS slope (clust)        381        0.599      0.487+/-0.081 grouped 10-fold
+v5    ESCS slope             18,687        0.211      0.123+/-0.038         5-fold
+v6    ESCS slope (clust)       ~435          ---          <0 (LOCO)   LOCO/87-fold
+v7    ESCS slope (clust)        381        0.599      0.487+/-0.081 grouped 10-fold
+========================================================================
+Note: v7 grouped CV respects country boundaries (no within-country leakage)
+      5-fold (ungrouped) for v7: 0.423 +/- 0.064
+
+      5-fold (ungrouped) for v7: 0.423 +/- 0.064
+
+-- FINAL SUMMARY -- EquiTrack v7 (clustered schools, corrected CV)
+Clusters       : 400 total | 381 with valid slope (95.2%)
+Avg students/cluster : 1471  (vs ~30 in v5 -- 49x more students per obs)
+Features       : 369
+-- FINAL SUMMARY -- EquiTrack v7 (clustered schools, corrected CV)
+Clusters       : 400 total | 381 with valid slope (95.2%)
+Avg students/cluster : 1471  (vs ~30 in v5 -- 49x more students per obs)
+Features       : 369
+Hold-out R2    : 0.599  (n_test=77, reference only)
+Hold-out R2    : 0.599  (n_test=77, reference only)
+5-fold CV R2   : 0.423 +/- 0.064  (ungrouped)
+Grouped 10-fold R2: 0.487 +/- 0.081  [PRIMARY]
+5-fold CV R2   : 0.423 +/- 0.064  (ungrouped)
+Grouped 10-fold R2: 0.487 +/- 0.081  [PRIMARY]
+
+Outputs:
+  cache/equitrack_panel_v7.parquet
+
+Outputs:
+  cache/equitrack_panel_v7.parquet
+  reports/xgb_equity_slope_v7.json
+  reports/shap_importance_v7.csv
+  reports/xgb_equity_slope_v7.json
+  reports/shap_importance_v7.csv
+  reports/intervention_ranking_v7.csv
+  reports/shap_importance_v7.csv
+  reports/intervention_ranking_v7.csv
+  figures/shap_bar_v7.png
+  figures/shap_bar_v7.png
+  figures/pred_vs_actual_v7.png
+  figures/pred_vs_actual_v7.png
+  figures/cluster_diagnostics_v7.png

@@ -1,0 +1,6 @@
+dataset,base_rows,matched_rows,match_rate
+student_questionnaire_to_school_questionnaire,613744,542957,0.8846636382596001
+teacher_school_aggregation_to_core,21358,4617,0.21617192621031933
+student_cognitive_to_core,613744,613744,1.0
+critical_thinking_to_core,613744,499843,0.8144161083448473
+financial_literacy_to_core,613744,0,0.0

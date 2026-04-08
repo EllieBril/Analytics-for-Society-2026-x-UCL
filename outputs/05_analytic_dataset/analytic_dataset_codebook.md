@@ -1,0 +1,144 @@
+# Analytic Dataset Codebook
+
+This file documents the canonical 2022 merged dataset used for the later steps.
+
+## Key identifiers
+- `CNT`: country code.
+- `school_key`: normalised international school identifier from `CNTSCHID`.
+- `student_key`: normalised international student identifier from `CNTSTUID`.
+
+## Main derived outcomes
+- `math_score`, `read_score`, `science_score`: mean of the 10 plausible values for descriptive modelling.
+- `EQUITY_RISK_SCORE`: supplied 2022 school risk score from the local CSV.
+
+## Main feature families
+- Student SES and home background: `ESCS`, `HISEI`, `PAREDINT`, `HOMEPOS`.
+- Student attitudes and behaviours: `BELONG`, `ANXMAT`, `SKIPPING`, `TARDYSD`, `MATHMOT`, `MATHEFF`, `ICTEFFIC`.
+- School context: `STAFFSHORT`, `EDUSHORT`, `NEGSCLIM`, `STUBEHA`, `TEACHBEHA`, `OPENCUL`, `SCHAUTO`, `ABGMATH`.
+- Teacher aggregates: `TRUST`, `TCDISCLIMA`, `AUTONOMY`, `FEEDBINSTR`, `ICTMATTC` and related raw averages.
+
+## Column count
+- 178 columns in canonical dataset.
+
+## Selected columns
+- `ABGMATH`
+- `ACCESSFP`
+- `ADMINMODE`
+- `ANXMAT`
+- `ATTCONFM`
+- `AUTONOMY`
+- `BELONG`
+- `BOOKID`
+- `CNT` (priority)
+- `CNTRYID`
+- `CNTRYID_school`
+- `CNTSCHID_x`
+- `CNTSCHID_y`
+- `CNTSTUID`
+- `COUNTRY_AVG_GAP`
+- `CURSUPP`
+- `EDUSHORT` (priority)
+- `EQUITY_RISK_SCORE` (priority)
+- `ESCS` (priority)
+- `EXPECEDU`
+- `FEEDBINSTR`
+- `FLCONFIN`
+- `FLCONICT`
+- `FLMULTSB`
+- `FLSCHOOL`
+- `HISEI`
+- `HOMEPOS`
+- `IC172Q01JA`
+- `IC172Q02JA`
+- `IC172Q03JA`
+- `IC172Q07JA`
+- `IC172Q08JA`
+- `IC172Q09JA`
+- `IC173Q02JA`
+- `IC175Q01JA`
+- `ICTEFFIC`
+- `ICTMATTC`
+- `ICTREG`
+- `ICTSUBJ`
+- `INFOSEEK`
+- `MATHEF21`
+- `MATHEFF`
+- `MATHMOT`
+- `MPATH`
+- `NEGSCLIM` (priority)
+- `OECD`
+- `OECD_school`
+- `OPENCUL`
+- `PAREDINT`
+- `PAREXPT`
+- `PARINVOL`
+- `PROPSUPP`
+- `PV10MATH`
+- `PV10READ`
+- `PV10SCIE`
+- `PV1MATH`
+- `PV1READ`
+- `PV1SCIE`
+- `PV2MATH`
+- `PV2READ`
+- `PV2SCIE`
+- `PV3MATH`
+- `PV3READ`
+- `PV3SCIE`
+- `PV4MATH`
+- `PV4READ`
+- `PV4SCIE`
+- `PV5MATH`
+- `PV5READ`
+- `PV5SCIE`
+- `PV6MATH`
+- `PV6READ`
+- `PV6SCIE`
+- `PV7MATH`
+- `PV7READ`
+- `PV7SCIE`
+- `PV8MATH`
+- `PV8READ`
+- `PV8SCIE`
+- `PV9MATH`
+- `PV9READ`
+- `PV9SCIE`
+- `RATCMP1`
+- `RATCMP2`
+- `RCO1S_PERF`
+- `RCORE_PERF`
+- `RDESIGN`
+- `REGION`
+- `REGION_school`
+- `SC001Q01TA`
+- `SC004Q02TA`
+- `SC004Q03TA`
+- `SC004Q07NA`
+- `SC011Q01TA`
+- `SC013Q01TA`
+- `SC017Q09JA`
+- `SC017Q10JA`
+- `SC018Q01TA01`
+- `SC018Q01TA02`
+- `SC018Q02TA01`
+- `SC018Q02TA02`
+- `SC037Q08TA`
+- `SC042Q01TA`
+- `SC042Q02TA`
+- `SC061Q05TA`
+- `SC173Q06JA`
+- `SC182Q01WA01`
+- `SC182Q01WA02`
+- `SC182Q06WA01`
+- `SC182Q06WA02`
+- `SC187Q03WA`
+- `SC187Q04WA`
+- `SC201Q01JA`
+- `SC201Q03JA`
+- `SC201Q04JA`
+- `SC201Q05JA`
+- `SC201Q06JA`
+- `SC202Q01JA`
+- `SC202Q02JA`
+- `SC202Q03JA`
+- Additional columns omitted here for brevity: 58
