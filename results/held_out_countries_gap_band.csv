@@ -1,0 +1,9 @@
+repeat,held_out_countries,n_test,macro_f1,balanced_accuracy,model,target
+1,"ISL, ALB, GEO, ISR, EST",1064,0.8984,0.9296,RandomForest,gap_band
+2,"GRC, KSV, VNM, THA, ALB",1190,1.0,1.0,RandomForest,gap_band
+3,"MKD, MDA, MAR, VNM, GTM",1022,1.0,1.0,RandomForest,gap_band
+4,"IRL, GBR, CHE, HKG, KSV",1273,0.8849,0.9396,RandomForest,gap_band
+1,"ISL, ALB, GEO, ISR, EST",1064,0.8946,0.9269,LightGBM,gap_band
+2,"GRC, KSV, VNM, THA, ALB",1190,1.0,1.0,LightGBM,gap_band
+3,"MKD, MDA, MAR, VNM, GTM",1022,1.0,1.0,LightGBM,gap_band
+4,"IRL, GBR, CHE, HKG, KSV",1273,0.9643,0.9821,LightGBM,gap_band

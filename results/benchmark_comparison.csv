@@ -1,0 +1,7 @@
+target,model,macro_f1,balanced_accuracy,cross_country_f1_mean,cross_country_f1_std,held_out_f1_mean,held_out_f1_std,f1_Closing,f1_Stable,f1_Widening,f1_High,f1_Low,f1_Medium,f1_Moderate
+trajectory,RandomForest,1.0,1.0,,,0.5334,0.0843,1.0,1.0,1.0,,,,
+trajectory,LightGBM,1.0,1.0,,,0.4968,0.0851,1.0,1.0,1.0,,,,
+gap_band,RandomForest,0.9989,0.9988,,,0.9458,0.0628,,,,0.9984,0.9994,0.9989,
+gap_band,LightGBM,0.9995,0.9994,,,0.9647,0.0497,,,,0.9995,0.9995,0.9995,
+risk_tier,RandomForest,0.9972,0.9973,0.9426,0.1201,0.877,0.1499,,,,0.9975,0.9982,,0.9959
+risk_tier,LightGBM,0.9977,0.9977,0.9498,0.1212,0.908,0.1558,,,,0.9978,0.9986,,0.9966

@@ -1,0 +1,11 @@
+repeat,held_out_countries,n_test,macro_f1,balanced_accuracy,model,target
+1,"ALB, BEL, PER, JPN, DEU",1334,0.5667,0.6491,RandomForest,trajectory
+2,"SVN, NZL, DEU, BEL, TUR",1252,0.4671,0.5277,RandomForest,trajectory
+3,"PER, BGR, ALB, THA, BEL",1376,0.5283,0.6611,RandomForest,trajectory
+4,"BEL, IRL, TUR, MLT, MDA",962,0.4472,0.5271,RandomForest,trajectory
+5,"DNK, PRT, MAC, GEO, SWE",1146,0.6577,0.6667,RandomForest,trajectory
+1,"ALB, BEL, PER, JPN, DEU",1334,0.3672,0.3509,LightGBM,trajectory
+2,"SVN, NZL, DEU, BEL, TUR",1252,0.473,0.5325,LightGBM,trajectory
+3,"PER, BGR, ALB, THA, BEL",1376,0.5278,0.6602,LightGBM,trajectory
+4,"BEL, IRL, TUR, MLT, MDA",962,0.5185,0.598,LightGBM,trajectory
+5,"DNK, PRT, MAC, GEO, SWE",1146,0.5975,0.564,LightGBM,trajectory

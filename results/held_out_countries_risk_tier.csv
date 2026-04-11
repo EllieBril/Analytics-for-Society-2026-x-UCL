@@ -1,0 +1,11 @@
+repeat,held_out_countries,n_test,macro_f1,balanced_accuracy,model,target
+1,"IRL, ALB, GBR, ISL, ESP",1995,0.8879,0.8741,RandomForest,risk_tier
+2,"GEO, KOR, SRB, THA, ALB",1189,0.6335,0.6667,RandomForest,risk_tier
+3,"MNE, MAC, KHM, MEX, VNM",750,0.8635,0.9257,RandomForest,risk_tier
+4,"PAN, GTM, CHE, EST, MDA",1226,1.0,1.0,RandomForest,risk_tier
+5,"MKD, UZB, JPN, MYS, MAR",872,1.0,1.0,RandomForest,risk_tier
+1,"IRL, ALB, GBR, ISL, ESP",1995,0.9762,0.9872,LightGBM,risk_tier
+2,"GEO, KOR, SRB, THA, ALB",1189,0.6335,0.6667,LightGBM,risk_tier
+3,"MNE, MAC, KHM, MEX, VNM",750,0.933,0.9659,LightGBM,risk_tier
+4,"PAN, GTM, CHE, EST, MDA",1226,0.9986,0.9986,LightGBM,risk_tier
+5,"MKD, UZB, JPN, MYS, MAR",872,0.9986,0.9983,LightGBM,risk_tier

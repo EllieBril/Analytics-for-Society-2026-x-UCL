@@ -1,0 +1,169 @@
+13:21:26  ======================================================================
+13:21:26  BENCHMARK #2 - Random Forest vs LightGBM
+13:21:26  ======================================================================
+13:21:26  Start time: 2026-04-11T13:21:26.032084
+13:21:26  Data path: C:\Users\elenb\.gemini\antigravity\playground\thermal-comet\school_risk_scores.csv
+13:21:26  Loaded school_risk_scores.csv - 21,629 rows, 8 cols
+13:21:26  Columns: ['CNT', 'SCHOOLID', 'SCHTYPE', 'SCHSIZE', 'STRATIO', 'COUNTRY_AVG_GAP', 'TRAJECTORY', 'EQUITY_RISK_SCORE']
+13:21:26  Countries: 80
+13:21:26  COUNTRY_AVG_GAP Q25=68.40, Q75=95.84
+13:21:26  EQUITY_RISK_SCORE T33=43.30, T66=59.80
+13:21:26  GAP_BAND distribution:
+GAP_BAND
+Medium    10660
+Low        5491
+High       5280
+13:21:26  RISK_TIER distribution:
+RISK_TIER
+Moderate    7408
+Low         7335
+High        6886
+13:21:26  TRAJECTORY distribution:
+TRAJECTORY
+Stable      7980
+Widening    5136
+Closing     4707
+NaN         3806
+13:21:26  
+13:21:26  ======================================================================
+13:21:26  TARGET: TRAJECTORY (TRAJECTORY)
+13:21:26  ======================================================================
+13:21:26    Data: X=(17823, 5), classes=['Closing', 'Stable', 'Widening'], counts=[4707, 7980, 5136]
+13:21:26    [RandomForest] RandomizedSearchCV (50 iters, 5-fold)...
+13:24:51    [RandomForest] Best CV macro-F1 = 1.0000  (204.9s)
+13:24:51    [RandomForest] Best params: {'class_weight': 'balanced', 'max_depth': 10, 'max_features': 0.7, 'min_samples_leaf': 3, 'min_samples_split': 8, 'n_estimators': 120}
+13:25:08    [RF] OOF F1=1.0000, BA=1.0000
+13:25:08    [RF] Per-class F1: {'Closing': 1.0, 'Stable': 1.0, 'Widening': 1.0}
+13:25:08    [LightGBM] RandomizedSearchCV (50 iters, 5-fold)...
+13:27:26    [LightGBM] Best CV macro-F1 = 1.0000  (137.6s)
+13:27:26    [LightGBM] Best params: {'class_weight': 'balanced', 'colsample_bytree': 0.8982714934301164, 'learning_rate': 0.0631960890611875, 'max_depth': 20, 'min_child_samples': 25, 'n_estimators': 202, 'num_leaves': 97, 'reg_alpha': 0.09997491581800289, 'reg_lambda': 0.45924889196586716, 'subsample': 0.7334834444556088}
+13:27:36    [LGBM] OOF F1=1.0000, BA=1.0000
+13:27:36    [LGBM] Per-class F1: {'Closing': 1.0, 'Stable': 1.0, 'Widening': 1.0}
+13:27:36      Saved confusion matrix -> confusion_rf_trajectory.png
+13:27:37      Saved confusion matrix -> confusion_lgbm_trajectory.png
+13:27:37      Saved calibration plot -> calibration_rf_trajectory.png
+13:27:37      Saved calibration plot -> calibration_lgbm_trajectory.png
+13:27:37    Computing cross-country stability...
+13:27:38    [RF]   XCountry F1: mean=nan +/- nan (0 countries)
+13:27:38    [LGBM] XCountry F1: mean=nan +/- nan (0 countries)
+13:27:38      Saved cross-country plot -> cross_country_trajectory.png
+13:27:38    [RandomForest] Held-out-country eval (5 countries x 5 repeats)...
+13:27:40      Rep 1: held-out=['ALB', 'BEL', 'PER', 'JPN', 'DEU'] -> F1=0.5667, BA=0.6491
+13:27:42      Rep 2: held-out=['SVN', 'NZL', 'DEU', 'BEL', 'TUR'] -> F1=0.4671, BA=0.5277
+13:27:44      Rep 3: held-out=['PER', 'BGR', 'ALB', 'THA', 'BEL'] -> F1=0.5283, BA=0.6611
+13:27:45      Rep 4: held-out=['BEL', 'IRL', 'TUR', 'MLT', 'MDA'] -> F1=0.4472, BA=0.5271
+13:27:47      Rep 5: held-out=['DNK', 'PRT', 'MAC', 'GEO', 'SWE'] -> F1=0.6577, BA=0.6667
+13:27:47    [LightGBM] Held-out-country eval (5 countries x 5 repeats)...
+13:27:48      Rep 1: held-out=['ALB', 'BEL', 'PER', 'JPN', 'DEU'] -> F1=0.3672, BA=0.3509
+13:27:49      Rep 2: held-out=['SVN', 'NZL', 'DEU', 'BEL', 'TUR'] -> F1=0.4730, BA=0.5325
+13:27:50      Rep 3: held-out=['PER', 'BGR', 'ALB', 'THA', 'BEL'] -> F1=0.5278, BA=0.6602
+13:27:51      Rep 4: held-out=['BEL', 'IRL', 'TUR', 'MLT', 'MDA'] -> F1=0.5185, BA=0.5980
+13:27:52      Rep 5: held-out=['DNK', 'PRT', 'MAC', 'GEO', 'SWE'] -> F1=0.5975, BA=0.5640
+13:27:52      Saved held-out results -> held_out_countries_trajectory.csv
+13:27:52    [RF]   HeldOut F1: mean=0.5334 +/- 0.0843
+13:27:52    [LGBM] HeldOut F1: mean=0.4968 +/- 0.0851
+13:27:52  
+13:27:52  ======================================================================
+13:27:52  TARGET: GAP_BAND (GAP_BAND)
+13:27:52  ======================================================================
+13:27:52    Data: X=(21431, 5), classes=['High', 'Low', 'Medium'], counts=[5280, 5491, 10660]
+13:27:52    [RandomForest] RandomizedSearchCV (50 iters, 5-fold)...
+13:31:50    [RandomForest] Best CV macro-F1 = 0.9989  (238.5s)
+13:31:50    [RandomForest] Best params: {'class_weight': 'balanced', 'max_depth': None, 'max_features': 0.5, 'min_samples_leaf': 1, 'min_samples_split': 5, 'n_estimators': 388}
+13:32:48    [RF] OOF F1=0.9989, BA=0.9988
+13:32:48    [RF] Per-class F1: {'High': 0.9983899990529406, 'Low': 0.9993624191638583, 'Medium': 0.9988745075970737}
+13:32:48    [LightGBM] RandomizedSearchCV (50 iters, 5-fold)...
+13:35:54    [LightGBM] Best CV macro-F1 = 0.9995  (185.8s)
+13:35:54    [LightGBM] Best params: {'class_weight': None, 'colsample_bytree': 0.9320837825359516, 'learning_rate': 0.07675372779005102, 'max_depth': 10, 'min_child_samples': 8, 'n_estimators': 134, 'num_leaves': 78, 'reg_alpha': 0.6454722959071678, 'reg_lambda': 0.17711067940704894, 'subsample': 0.9761834337411657}
+13:36:03    [LGBM] OOF F1=0.9995, BA=0.9994
+13:36:03    [LGBM] Per-class F1: {'High': 0.9995262908574135, 'Low': 0.9994536514296121, 'Medium': 0.9994841735052755}
+13:36:03      Saved confusion matrix -> confusion_rf_gap_band.png
+13:36:03      Saved confusion matrix -> confusion_lgbm_gap_band.png
+13:36:04      Saved calibration plot -> calibration_rf_gap_band.png
+13:36:05      Saved calibration plot -> calibration_lgbm_gap_band.png
+13:36:05    Computing cross-country stability...
+13:36:05    [RF]   XCountry F1: mean=nan +/- nan (0 countries)
+13:36:05    [LGBM] XCountry F1: mean=nan +/- nan (0 countries)
+13:36:05      Saved cross-country plot -> cross_country_gap_band.png
+13:36:05    [RandomForest] Held-out-country eval (5 countries x 5 repeats)...
+13:36:11      Rep 1: held-out=['ISL', 'ALB', 'GEO', 'ISR', 'EST'] -> F1=0.8984, BA=0.9296
+13:36:18      Rep 2: held-out=['GRC', 'KSV', 'VNM', 'THA', 'ALB'] -> F1=1.0000, BA=1.0000
+13:36:24      Rep 3: held-out=['MKD', 'MDA', 'MAR', 'VNM', 'GTM'] -> F1=1.0000, BA=1.0000
+13:36:31      Rep 4: held-out=['IRL', 'GBR', 'CHE', 'HKG', 'KSV'] -> F1=0.8849, BA=0.9396
+13:36:31    [LightGBM] Held-out-country eval (5 countries x 5 repeats)...
+13:36:31      Rep 1: held-out=['ISL', 'ALB', 'GEO', 'ISR', 'EST'] -> F1=0.8946, BA=0.9269
+13:36:32      Rep 2: held-out=['GRC', 'KSV', 'VNM', 'THA', 'ALB'] -> F1=1.0000, BA=1.0000
+13:36:33      Rep 3: held-out=['MKD', 'MDA', 'MAR', 'VNM', 'GTM'] -> F1=1.0000, BA=1.0000
+13:36:33      Rep 4: held-out=['IRL', 'GBR', 'CHE', 'HKG', 'KSV'] -> F1=0.9643, BA=0.9821
+13:36:33      Saved held-out results -> held_out_countries_gap_band.csv
+13:36:33    [RF]   HeldOut F1: mean=0.9458 +/- 0.0628
+13:36:33    [LGBM] HeldOut F1: mean=0.9647 +/- 0.0497
+13:36:33  
+13:36:33  ======================================================================
+13:36:33  TARGET: RISK_TIER (RISK_TIER)
+13:36:33  ======================================================================
+13:36:33    Data: X=(21629, 5), classes=['High', 'Low', 'Moderate'], counts=[6886, 7335, 7408]
+13:36:33    [RandomForest] RandomizedSearchCV (50 iters, 5-fold)...
+13:40:34    [RandomForest] Best CV macro-F1 = 0.9972  (240.8s)
+13:40:34    [RandomForest] Best params: {'class_weight': 'balanced_subsample', 'max_depth': None, 'max_features': 0.5, 'min_samples_leaf': 2, 'min_samples_split': 9, 'n_estimators': 487}
+13:42:00    [RF] OOF F1=0.9972, BA=0.9973
+13:42:00    [RF] Per-class F1: {'High': 0.9975362318840579, 'Low': 0.9982281586479488, 'Moderate': 0.9959415584415584}
+13:42:00    [LightGBM] RandomizedSearchCV (50 iters, 5-fold)...
+13:45:14    [LightGBM] Best CV macro-F1 = 0.9977  (194.0s)
+13:45:14    [LightGBM] Best params: {'class_weight': 'balanced', 'colsample_bytree': 0.8047821669899484, 'learning_rate': 0.15577691673636984, 'max_depth': 20, 'min_child_samples': 36, 'n_estimators': 324, 'num_leaves': 15, 'reg_alpha': 0.23956189066697242, 'reg_lambda': 0.1448948720912231, 'subsample': 0.7957811041110252}
+13:45:24    [LGBM] OOF F1=0.9977, BA=0.9977
+13:45:24    [LGBM] Per-class F1: {'High': 0.9978254566541026, 'Low': 0.9986376021798365, 'Moderate': 0.9966175077797321}
+13:45:24      Saved confusion matrix -> confusion_rf_risk_tier.png
+13:45:24      Saved confusion matrix -> confusion_lgbm_risk_tier.png
+13:45:25      Saved calibration plot -> calibration_rf_risk_tier.png
+13:45:25      Saved calibration plot -> calibration_lgbm_risk_tier.png
+13:45:25    Computing cross-country stability...
+13:45:25    [RF]   XCountry F1: mean=0.9426 +/- 0.1201 (16 countries)
+13:45:25    [LGBM] XCountry F1: mean=0.9498 +/- 0.1212 (16 countries)
+13:45:26      Saved cross-country plot -> cross_country_risk_tier.png
+13:45:26    [RandomForest] Held-out-country eval (5 countries x 5 repeats)...
+13:45:35      Rep 1: held-out=['IRL', 'ALB', 'GBR', 'ISL', 'ESP'] -> F1=0.8879, BA=0.8741
+13:45:45      Rep 2: held-out=['GEO', 'KOR', 'SRB', 'THA', 'ALB'] -> F1=0.6335, BA=0.6667
+13:45:54      Rep 3: held-out=['MNE', 'MAC', 'KHM', 'MEX', 'VNM'] -> F1=0.8635, BA=0.9257
+13:46:05      Rep 4: held-out=['PAN', 'GTM', 'CHE', 'EST', 'MDA'] -> F1=1.0000, BA=1.0000
+13:46:15      Rep 5: held-out=['MKD', 'UZB', 'JPN', 'MYS', 'MAR'] -> F1=1.0000, BA=1.0000
+13:46:15    [LightGBM] Held-out-country eval (5 countries x 5 repeats)...
+13:46:16      Rep 1: held-out=['IRL', 'ALB', 'GBR', 'ISL', 'ESP'] -> F1=0.9762, BA=0.9872
+13:46:17      Rep 2: held-out=['GEO', 'KOR', 'SRB', 'THA', 'ALB'] -> F1=0.6335, BA=0.6667
+13:46:18      Rep 3: held-out=['MNE', 'MAC', 'KHM', 'MEX', 'VNM'] -> F1=0.9330, BA=0.9659
+13:46:20      Rep 4: held-out=['PAN', 'GTM', 'CHE', 'EST', 'MDA'] -> F1=0.9986, BA=0.9986
+13:46:21      Rep 5: held-out=['MKD', 'UZB', 'JPN', 'MYS', 'MAR'] -> F1=0.9986, BA=0.9983
+13:46:21      Saved held-out results -> held_out_countries_risk_tier.csv
+13:46:21    [RF]   HeldOut F1: mean=0.8770 +/- 0.1499
+13:46:21    [LGBM] HeldOut F1: mean=0.9080 +/- 0.1558
+13:46:21  
+13:46:21  ======================================================================
+13:46:21  SUMMARY - HEAD-TO-HEAD COMPARISON
+13:46:21  ======================================================================
+13:46:21  Saved benchmark_comparison.csv
+13:46:21  
+  -- TRAJECTORY --
+13:46:21      RandomForest     F1=1.0000  BA=1.0000  XCountry=nan+/-nan  HeldOut=0.5334+/-0.0843
+13:46:21      LightGBM         F1=1.0000  BA=1.0000  XCountry=nan+/-nan  HeldOut=0.4968+/-0.0851
+13:46:21  
+  -- GAP_BAND --
+13:46:21      RandomForest     F1=0.9989  BA=0.9988  XCountry=nan+/-nan  HeldOut=0.9458+/-0.0628
+13:46:21      LightGBM         F1=0.9995  BA=0.9994  XCountry=nan+/-nan  HeldOut=0.9647+/-0.0497
+13:46:21  
+  -- RISK_TIER --
+13:46:21      RandomForest     F1=0.9972  BA=0.9973  XCountry=0.9426+/-0.1201  HeldOut=0.8770+/-0.1499
+13:46:21      LightGBM         F1=0.9977  BA=0.9977  XCountry=0.9498+/-0.1212  HeldOut=0.9080+/-0.1558
+13:46:21  
+13:46:21  ======================================================================
+13:46:21  ROBUSTNESS VERDICT
+13:46:21  ======================================================================
+13:46:21    trajectory: ROBUST - Signal is stable across model families
+13:46:21      Delta_F1 = 0.0000, Delta_BA = 0.0000  (better: Random Forest)
+13:46:21    gap_band: ROBUST - Signal is stable across model families
+13:46:21      Delta_F1 = 0.0006, Delta_BA = 0.0006  (better: LightGBM)
+13:46:21    risk_tier: ROBUST - Signal is stable across model families
+13:46:21      Delta_F1 = 0.0005, Delta_BA = 0.0004  (better: LightGBM)
+13:46:21  
+13:46:21  Completed at 2026-04-11T13:46:21.201207
+13:46:21  All results saved to C:\Users\elenb\.gemini\antigravity\playground\thermal-comet\results
+13:46:21  ======================================================================
