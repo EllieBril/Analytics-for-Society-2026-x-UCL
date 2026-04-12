@@ -201,7 +201,8 @@ st.markdown('<hr class="divider">', unsafe_allow_html=True)
 tab1, tab2, tab3, tab4 = st.tabs([
     "🌍  Global Context",
     "🏫  My School Report",
-    "📚  Intervention Evidence Base"
+    "📚  Intervention Evidence Base",
+    "✅  Model Validation"
 ])
 
 # ══════════════════════════════════════════════════════════════════════════════
