@@ -1,0 +1,7 @@
+target,model,f1
+trajectory,RF,0.3754
+trajectory,LGBM,0.3751
+gap_band,RF,0.5749
+gap_band,LGBM,0.5312
+risk_tier,RF,0.5915
+risk_tier,LGBM,0.5788

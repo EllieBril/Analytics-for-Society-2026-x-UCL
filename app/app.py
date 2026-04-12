@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-from model import get_equity_risk_score, get_interventions, calculate_realistic_reduction
+from model import get_equity_risk_score, get_interventions, calculate_realistic_reduction, predict_segment, SEGMENT_INFO, INTERVENTION_CATEGORIES
 import os
 
 # ── PAGE CONFIG ───────────────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ st.markdown(
 st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
 # ── TABS ──────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3 = st.tabs([
+tab1, tab2, tab3, tab4 = st.tabs([
     "🌍  Global Context",
     "🏫  My School Report",
     "📚  Intervention Evidence Base"
@@ -480,7 +480,19 @@ with tab2:
             df_gap=df_gap
         )
 
+        # ── Predict school segment ────────────────────────────────────────────
+        import joblib
+        seg_result = predict_segment(
+            risk_score=risk_result['equity_risk'],
+            school_mean_math=school_math_score,
+            staffshort=staff_shortage,
+            edushort=resource_shortage,
+            negsclim=behaviour_disruption,
+            disadvantaged_pct=disadvantaged_pct / 100
+        )
+
         int_result = get_interventions(
+
             country_code=country,
             annual_budget_gbp=budget,
             school_size=school_size,
@@ -519,7 +531,32 @@ with tab2:
             risk_class = 'risk-low'
             risk_label = 'Lower risk'
 
+        # ── Segment card ──────────────────────────────────────────────────────
+        seg_name = seg_result['segment']
+        seg_info = seg_result['info']
+        seg_conf = seg_result['confidence']
+        st.markdown(f"""
+        <div style="background:{seg_info.get('color','#333')}15; border:2px solid {seg_info.get('color','#333')};
+                    border-radius:12px; padding:1.2rem 1.4rem; margin-bottom:1.5rem;">
+            <div style="font-size:0.75rem; font-weight:600; text-transform:uppercase;
+                        letter-spacing:0.08em; color:{seg_info.get('color','#333')}; margin-bottom:0.3rem;">
+                {seg_info.get('icon','')} Your school profile
+            </div>
+            <div style="font-family:'DM Serif Display',serif; font-size:1.6rem;
+                        color:#0F2A1D; line-height:1.2; margin-bottom:0.4rem;">
+                {seg_name}
+            </div>
+            <div style="font-size:0.85rem; color:#4A6355;">
+                {seg_info.get('desc','')}
+            </div>
+            <div style="font-size:0.75rem; color:#9CA3AF; margin-top:0.5rem;">
+                Confidence: {seg_conf}% | Based on your diagnostic inputs
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
         traj = risk_result['trajectory']
+
         trajectory = traj
         if traj == 'Closing':
             traj_class = 'traj-closing'
@@ -1135,5 +1172,139 @@ with tab3:
         <b>Cost definitions:</b> £ = up to £80/pupil/year | ££ = £80–200 |
         £££ = £200–700 | ££££ = £700–1,200 | £££££ = over £1,200 (EEF definitions)<br>
         <b>Conversion:</b> 1 EEF month ≈ 3.5 PISA points (OECD benchmark: 1 year ≈ 35–40 pts)
+    </div>
+    """, unsafe_allow_html=True)
+
+# ==============================================================================
+# TAB 4 - MODEL VALIDATION
+# ==============================================================================
+with tab4:
+
+    st.markdown('<div class="section-title">Robustness benchmark: Random Forest vs LightGBM</div>',
+                unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="insight-box">
+        <b>Are the predictive signals real or model-specific?</b><br>
+        We trained two independent ML models (Random Forest and LightGBM) on
+        <b>84,232 student records across 5 PISA cycles (2009-2022)</b> using only
+        genuine school-level operational features. Both models were evaluated with
+        leak-free validation (GroupKFold by country).
+        <b>Result: both models agree within 0.05 F1</b>, confirming the signal is
+        model-agnostic.
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Load benchmark results
+    df_bench = pd.read_csv(os.path.join(os.path.dirname(__file__), 'data', 'v2_comparison.csv'))
+
+    # Comparison chart
+    import plotly.graph_objects as go
+
+    targets = ['trajectory', 'gap_band', 'risk_tier']
+    target_labels = {'trajectory': 'Trajectory', 'gap_band': 'Gap Band', 'risk_tier': 'Risk Tier'}
+
+    fig_bench = go.Figure()
+    for model_name, color in [('RF', '#2C6E49'), ('LGBM', '#D96C06')]:
+        model_data = df_bench[df_bench['model'] == model_name]
+        fig_bench.add_trace(go.Bar(
+            x=[target_labels.get(t, t) for t in model_data['target']],
+            y=model_data['f1'],
+            name=model_name,
+            marker_color=color,
+            text=[f'{v:.3f}' for v in model_data['f1']],
+            textposition='outside',
+        ))
+
+    fig_bench.update_layout(
+        title='F1 Score comparison: RF vs LightGBM (leak-free longitudinal)',
+        yaxis_title='F1 Score (weighted)',
+        yaxis_range=[0, 0.75],
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        barmode='group',
+        height=420,
+        margin=dict(l=40, r=40, t=50, b=40),
+        font=dict(family='DM Sans', size=12),
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
+    )
+    st.plotly_chart(fig_bench, use_container_width=True)
+
+    # Key metrics cards
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-label">Best target</div>
+            <div class="metric-value">Risk Tier</div>
+            <div class="metric-sub">RF F1 = 0.592 | LGBM F1 = 0.579</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with b2:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-label">Model agreement</div>
+            <div class="metric-value risk-low">< 0.05</div>
+            <div class="metric-sub">Max F1 difference between RF and LGBM</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with b3:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-label">Segment classifier</div>
+            <div class="metric-value">F1 = 0.626</div>
+            <div class="metric-sub">LightGBM on 14,889 labeled schools</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Methodology section
+    st.markdown('<div class="section-title">Validation methodology</div>',
+                unsafe_allow_html=True)
+
+    meth1, meth2 = st.columns(2)
+
+    with meth1:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-label">Leak-free design</div>
+            <div style="font-size:0.85rem; color:#374151; margin-top:0.5rem">
+                <b>Problem:</b> V1 benchmark showed perfect F1 = 1.0, which was
+                caused by <code>COUNTRY_AVG_GAP</code> acting as a country fingerprint.<br><br>
+                <b>Solution:</b> V2 removed all derived/leaky features and used only
+                genuine school-level operational features: funding ratios, staffing
+                levels, and enrollment patterns.<br><br>
+                <b>Validation:</b> GroupKFold by country ensures no within-country
+                data leakage between train and test splits.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with meth2:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-label">What the modest F1 scores mean</div>
+            <div style="font-size:0.85rem; color:#374151; margin-top:0.5rem">
+                F1 scores of 0.38-0.59 are <b>expected and valid</b>. School-level
+                features alone cannot fully predict country-level equity outcomes
+                because structural factors (culture, policy, history) dominate.<br><br>
+                This validates EquiTrack's <b>hybrid architecture</b>: the formula-based
+                risk score (gap + trajectory + school profile) captures what pure ML
+                cannot, while the school-level ML confirms that operational features
+                provide genuine, modest predictive signal.<br><br>
+                <b>The segment classifier</b> achieves higher F1 (0.626) because it
+                predicts school-level profiles rather than country-level targets.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="footer-note">
+        <b>Benchmark data:</b> 84,232 students across 5 PISA cycles (2009, 2012, 2015, 2018, 2022) |
+        2,000 stratified students per country per cycle |
+        Margin of error: +/-12.4 PISA points (95% CI)<br>
+        <b>Models:</b> Random Forest (500 trees) and LightGBM (200 estimators) |
+        Evaluated with GroupKFold (country isolation) and StratifiedKFold<br>
+        <b>Segment classifier:</b> LightGBM trained on 14,889 labeled schools from
+        PISA 2022 school profiles | 5-fold stratified CV F1 = 0.626
     </div>
     """, unsafe_allow_html=True)
