@@ -445,6 +445,51 @@ with tab2:
             help='Used to estimate the size of your target group'
         )
 
+    # -- School diagnostic questions -----------------------------------------------
+    st.markdown('<div class="section-title">School diagnostic</div>',
+                unsafe_allow_html=True)
+    st.caption('These questions help us identify your school profile and tailor recommendations')
+
+    diag1, diag2, diag3, diag4 = st.columns(4)
+
+    with diag1:
+        _bundle = __import__('joblib').load(__import__('os').path.join(__import__('os').path.dirname(__file__), 'data', 'segment_classifier.pkl'))
+        _crefs = _bundle.get('country_math_refs', {})
+        _ref = f'Your country avg: {_crefs.get(country, "N/A")}' if country in _crefs else 'OECD avg: 472'
+        school_math_score = st.number_input(
+            'Average school maths score',
+            min_value=200, max_value=700, value=480, step=5,
+            help=f'Your school maths average (PISA scale). {_ref}'
+        )
+
+    with diag2:
+        staff_shortage = st.select_slider(
+            'Staff shortage impact',
+            options=[1, 2, 3, 4],
+            value=2,
+            format_func=lambda x: ['', 'Not at all', 'Very little', 'To some extent', 'A lot'][x],
+            help='How much is learning hindered by lack of teaching staff?'
+        )
+
+    with diag3:
+        resource_shortage = st.select_slider(
+            'Resource/material shortage',
+            options=[1, 2, 3, 4],
+            value=2,
+            format_func=lambda x: ['', 'Not at all', 'Very little', 'To some extent', 'A lot'][x],
+            help='How much is learning hindered by lack of educational materials?'
+        )
+
+    with diag4:
+        behaviour_disruption = st.select_slider(
+            'Behaviour disruption',
+            options=[1, 2, 3, 4],
+            value=2,
+            format_func=lambda x: ['', 'Never', 'Some lessons', 'Most lessons', 'Every lesson'][x],
+            help='How often does student behaviour disrupt lessons?'
+        )
+
+
     st.markdown('<div class="section-title">Current practices</div>',
                 unsafe_allow_html=True)
     st.caption('Select interventions already in place — these will be excluded from recommendations')
