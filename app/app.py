@@ -1835,9 +1835,7 @@ with tab4:
         <div class="metric-card">
             <div class="metric-label">Leak-free design</div>
             <div style="font-size:0.85rem; color:#374151; margin-top:0.5rem">
-                <b>Problem:</b> V1 benchmark showed perfect F1 = 1.0, which was
-                caused by <code>COUNTRY_AVG_GAP</code> acting as a country fingerprint.<br><br>
-                <b>Solution:</b> V2 removed all derived/leaky features and used only
+                <b>Solution:</b> We removed all derived/leaky features and used only
                 genuine school-level operational features: funding ratios, staffing
                 levels, and enrollment patterns.<br><br>
                 <b>Validation:</b> GroupKFold by country ensures no within-country
