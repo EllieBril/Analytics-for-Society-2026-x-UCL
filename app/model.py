@@ -53,9 +53,18 @@ INTERVENTION_CATEGORIES = {
 }
 
 
+_segment_bundle = None
+
+def _load_segment_bundle():
+    global _segment_bundle
+    if _segment_bundle is None:
+        model_path = os.path.join(os.path.dirname(__file__), 'data', 'segment_classifier.pkl')
+        _segment_bundle = joblib.load(model_path)
+    return _segment_bundle
+
+
 def predict_segment(risk_score, school_mean_math, staffshort, edushort, negsclim, disadvantaged_pct):
-    model_path = os.path.join(os.path.dirname(__file__), 'data', 'segment_classifier.pkl')
-    bundle = joblib.load(model_path)
+    bundle = _load_segment_bundle()
     mdl = bundle['model']
     le = bundle['label_encoder']
     school_mean_escs = 0.5 - (disadvantaged_pct * 2.0)
@@ -81,7 +90,6 @@ def get_equity_risk_score(
     country_code,
     school_type,
     stratio,
-    df_scores,
     df_traj,
     df_gap
 ):
@@ -151,19 +159,21 @@ def get_interventions(
     school_size,
     disadvantaged_pct,
     existing_practices,
-    df_interventions
+    df_interventions,
+    segment_priorities=None
 ):
     """
     Return ranked interventions filtered by budget and existing practices.
 
     Parameters:
     -----------
-    country_code      : str   — ISO 3-letter country code
-    annual_budget_gbp : float — annual discretionary budget in GBP
-    school_size       : int   — total number of students
-    disadvantaged_pct : float — proportion of disadvantaged students (0-1)
-    existing_practices: list  — interventions already in place
-    df_interventions  : DataFrame — EEF intervention library
+    country_code        : str   — ISO 3-letter country code
+    annual_budget_gbp   : float — annual discretionary budget in GBP
+    school_size         : int   — total number of students
+    disadvantaged_pct   : float — proportion of disadvantaged students (0-1)
+    existing_practices  : list  — interventions already in place
+    df_interventions    : DataFrame — EEF intervention library
+    segment_priorities  : list | None — ordered category priorities from predict_segment()
 
     Returns:
     --------
@@ -189,8 +199,24 @@ def get_interventions(
     # Filter: minimum evidence strength
     df_int = df_int[df_int['evidence'] >= 2]
 
-    # Sort by cost-effectiveness descending
-    df_int = df_int.sort_values('cost_effectiveness', ascending=False)
+    # Map each intervention to its category
+    inv_to_cat = {k: v for k, v in INTERVENTION_CATEGORIES.items()}
+    df_int['category'] = df_int['intervention'].map(inv_to_cat).fillna('other')
+
+    # Sort: by segment priority tier first, then cost-effectiveness within each tier
+    if segment_priorities:
+        priority_index = {cat: i for i, cat in enumerate(segment_priorities)}
+        df_int['priority_tier'] = df_int['category'].map(
+            lambda c: priority_index.get(c, len(segment_priorities))
+        )
+        df_int = df_int.sort_values(
+            ['priority_tier', 'cost_effectiveness'],
+            ascending=[True, False]
+        )
+    else:
+        df_int['priority_tier'] = 0
+        df_int = df_int.sort_values('cost_effectiveness', ascending=False)
+
     df_int['rank'] = range(1, len(df_int) + 1)
 
     return {
@@ -198,7 +224,8 @@ def get_interventions(
         'interventions':   df_int[[
             'rank', 'intervention', 'gap_reduction_pts',
             'total_cost', 'cost_effectiveness',
-            'evidence', 'impact_months', 'cost_rating'
+            'evidence', 'impact_months', 'cost_rating',
+            'category', 'priority_tier'
         ]]
     }
 
