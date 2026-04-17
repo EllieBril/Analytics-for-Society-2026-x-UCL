@@ -1092,11 +1092,17 @@ with tab2:
         total_reduction = round(mitigation_credit + realistic_reduction, 1)
         mit_sub = f'{len(existing)} practice(s) already in place' if existing else 'No existing practices entered'
 
+        st.caption(
+            f'The equity gap for {country} is {country_gap} pts — '
+            f'the maths score difference between the most and least advantaged 25% of students. '
+            f'Cards 2 and 4 show how much of this gap your school can close.'
+        )
+
         m1, m2, m3, m4 = st.columns(4)
         with m1:
             st.markdown(f"""
             <div class="metric-card" style="display:flex; flex-direction:column; height:100%;">
-                <div class="metric-label">Equity risk score <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:0.7rem;">(0–100 composite)</span></div>
+                <div class="metric-label">Equity risk score <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:0.7rem;">(0–100 composite index)</span></div>
                 <div class="metric-value {risk_class}">{risk_score}<span style="font-size:1rem">/100</span></div>
                 <div class="metric-sub">{risk_label}</div>
                 <div style="display:flex; height:6px; border-radius:3px; overflow:hidden; margin-top:0.65rem;">
@@ -1114,7 +1120,7 @@ with tab2:
         with m2:
             st.markdown(f"""
             <div class="metric-card" style="display:flex; flex-direction:column; height:100%;">
-                <div class="metric-label">Current mitigation <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:0.7rem;">(PISA pts)</span></div>
+                <div class="metric-label">Gap already being closed <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:0.7rem;">(by existing practices)</span></div>
                 <div class="metric-value risk-low">–{mitigation_credit}<span style="font-size:1rem"> pts</span></div>
                 <div class="metric-sub">{mit_sub}</div>
             </div>
@@ -1130,9 +1136,9 @@ with tab2:
         with m4:
             st.markdown(f"""
             <div class="metric-card" style="display:flex; flex-direction:column; height:100%;">
-                <div class="metric-label">Potential gap reduction <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:0.7rem;">(PISA pts)</span></div>
-                <div class="metric-value risk-low">–{total_reduction}<span style="font-size:1rem"> pts</span></div>
-                <div class="metric-sub">Projected gap: {projected_gap} PISA pts after all interventions</div>
+                <div class="metric-label">Additional gap closable <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:0.7rem;">(recommended interventions)</span></div>
+                <div class="metric-value risk-low">–{realistic_reduction}<span style="font-size:1rem"> pts</span></div>
+                <div class="metric-sub">Projected gap: {projected_gap} pts (from {country_gap} pts baseline)</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -1325,6 +1331,11 @@ with tab2:
                     f'({disadvantaged_pct}% of {school_size})'
                 )
                 for _, row in df_rec.iterrows():
+                    # Realistic contribution = EEF impact scaled to target group
+                    # with diminishing returns for each additional intervention
+                    realistic_contrib = round(
+                        row['gap_reduction_pts'] * (disadvantaged_pct / 100) * (0.7 ** (row['rank'] - 1)), 1
+                    )
                     cost_color = (
                         'badge-green' if row['cost_rating'] == 1
                         else 'badge-amber' if row['cost_rating'] <= 3
@@ -1341,8 +1352,16 @@ with tab2:
                             <div class="intervention-name">
                                 #{int(row['rank'])} {row['intervention']}{profile_badge}
                             </div>
-                            <div style="font-family:'DM Serif Display',serif; font-size:1.3rem; color:#1D9E75">
-                                –{row['gap_reduction_pts']:.0f} pts
+                            <div style="text-align:right;">
+                                <div style="font-family:'DM Serif Display',serif; font-size:1.3rem; color:#1D9E75; line-height:1.1;">
+                                    –{realistic_contrib:.1f} pts
+                                </div>
+                                <div style="font-size:0.68rem; color:#9CA3AF;">
+                                    to your equity gap
+                                </div>
+                                <div style="font-size:0.68rem; color:#9CA3AF;">
+                                    EEF raw: –{row['gap_reduction_pts']:.0f} pts
+                                </div>
                             </div>
                         </div>
                         <div class="intervention-meta" style="margin-top:0.5rem">
@@ -1399,9 +1418,9 @@ with tab2:
                 <div class="metric-card">
                     <div class="metric-label">If top intervention applied</div>
                     <div class="metric-value risk-low">
-                        –{df_rec.iloc[0]['gap_reduction_pts']:.0f}<span style="font-size:1rem"> pts</span>
+                        –{round(df_rec.iloc[0]['gap_reduction_pts'] * (disadvantaged_pct / 100), 1):.1f}<span style="font-size:1rem"> pts</span>
                     </div>
-                    <div class="metric-sub">{df_rec.iloc[0]['intervention']}</div>
+                    <div class="metric-sub">{df_rec.iloc[0]['intervention']} · scaled to your {disadvantaged_pct}% target group</div>
                 </div>
                 """, unsafe_allow_html=True)
 
