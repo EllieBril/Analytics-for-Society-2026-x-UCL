@@ -1108,82 +1108,75 @@ with tab2:
         seg_info = seg_result['info']
         top_priority = seg_info.get('priorities', ['learning support'])[0].replace('_', ' ')
         seg_rationale = SEGMENT_RATIONALE.get(seg_name, '')
-        seg_col, seg_list_col, cat_col = st.columns([3, 2, 1.5])
-        with seg_col:
-            st.markdown(f"""
-            <div style="background:{seg_info.get('color','#333')}15; border:2px solid {seg_info.get('color','#333')};
-                        border-radius:12px; padding:1.2rem 1.4rem; margin-bottom:1.5rem; height:100%;">
-                <div style="font-size:0.75rem; font-weight:600; text-transform:uppercase;
-                            letter-spacing:0.08em; color:{seg_info.get('color','#333')}; margin-bottom:0.3rem;">
-                    {seg_info.get('icon','')} Your school profile
-                </div>
-                <div style="font-family:'DM Serif Display',serif; font-size:1.6rem;
-                            color:#0F2A1D; line-height:1.2; margin-bottom:0.4rem;">
-                    {seg_name}
-                </div>
-                <div style="font-size:0.85rem; color:#4A6355;">
-                    {seg_info.get('desc','')}
-                </div>
-                <div style="font-size:0.82rem; color:#374151; margin-top:0.5rem; line-height:1.5;">
-                    {seg_rationale}
-                </div>
-                <div style="font-size:0.75rem; color:#9CA3AF; margin-top:0.5rem;">
-                    Rule-based profile | Based on your diagnostic inputs
-                </div>
-                <div style="font-size:0.8rem; color:#374151; margin-top:0.6rem; border-top:1px solid #E5E7EB; padding-top:0.5rem;">
-                    The interventions below prioritise <b>{top_priority}</b> to match your school's profile.
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        with seg_list_col:
-            _seg_color = seg_info.get('color', '#333')
-            _segs_html = '<div style="margin-bottom:0.4rem; font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:#6B7280;">School profiles</div>'
-            for _sname, _sdata in SEGMENT_INFO.items():
-                if _sname == seg_name:
-                    _segs_html += f"""
-                    <div style="border-left:3px solid {_sdata['color']}; background:{_sdata['color']}12;
-                                padding:0.4rem 0.6rem; border-radius:6px; margin-bottom:0.4rem;
-                                font-size:0.78rem; color:#1F2937; display:flex; align-items:center; gap:0.4rem;">
-                        <span>{_sdata['icon']}</span>
-                        <b>{_sname}</b>
-                    </div>"""
-                else:
-                    _segs_html += f"""
-                    <div style="border-left:3px solid #E5E7EB; background:#F9FAFB;
-                                padding:0.4rem 0.6rem; border-radius:6px; margin-bottom:0.4rem;
-                                font-size:0.78rem; color:#9CA3AF; display:flex; align-items:center; gap:0.4rem;">
-                        <span>{_sdata['icon']}</span>
-                        {_sname}
-                    </div>"""
-            st.markdown(_segs_html, unsafe_allow_html=True)
-        with cat_col:
-            _priorities = seg_info.get('priorities', [])
-            _all_cats = [
-                ('learning_support',   '📚', 'Learning Support'),
-                ('climate_support',    '🤝', 'Climate Support'),
-                ('family_engagement',  '👨‍👩‍👧', 'Family Engagement'),
-                ('resource_intensive', '💼', 'Resource Intensive'),
-            ]
-            _pills_html = '<div style="margin-bottom:0.4rem; font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:#6B7280;">Intervention focus</div>'
-            for _cat_key, _cat_icon, _cat_label in _all_cats:
-                if _cat_key in _priorities:
-                    _rank = _priorities.index(_cat_key) + 1
-                    _pills_html += f"""
-                    <div style="border-left:3px solid {_seg_color}; background:#fff;
-                                padding:0.4rem 0.6rem; border-radius:6px; margin-bottom:0.45rem;
-                                font-size:0.78rem; color:#1F2937; display:flex;
-                                justify-content:space-between; align-items:center;">
-                        <span>{_cat_icon} <b>{_cat_label}</b></span>
-                        <span style="font-size:0.65rem; color:{_seg_color}; white-space:nowrap; margin-left:0.3rem;">#{_rank}</span>
-                    </div>"""
-                else:
-                    _pills_html += f"""
-                    <div style="border-left:3px solid #E5E7EB; background:#F9FAFB;
-                                padding:0.4rem 0.6rem; border-radius:6px; margin-bottom:0.45rem;
-                                font-size:0.78rem; color:#9CA3AF;">
-                        {_cat_icon} {_cat_label}
-                    </div>"""
-            st.markdown(_pills_html, unsafe_allow_html=True)
+        _seg_color = seg_info.get('color', '#333')
+        _priorities = seg_info.get('priorities', [])
+        _all_cats = [
+            ('learning_support',   '📚', 'Learning Support'),
+            ('climate_support',    '🤝', 'Climate Support'),
+            ('family_engagement',  '👨‍👩‍👧', 'Family Engagement'),
+            ('resource_intensive', '💼', 'Resource Intensive'),
+        ]
+
+        # Build the entire segment block as a single compact string (no embedded multi-line vars)
+        _html = (
+            f'<div style="display:flex;gap:1rem;align-items:stretch;margin-bottom:1.5rem;">'
+
+            # Panel 1 — segment card
+            f'<div style="flex:3;background:{_seg_color}15;border:2px solid {_seg_color};border-radius:12px;padding:1.2rem 1.4rem;box-sizing:border-box;">'
+            f'<div style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:{_seg_color};margin-bottom:0.3rem;">{seg_info.get("icon","")} Your school profile</div>'
+            f'<div style="font-family:\'DM Serif Display\',serif;font-size:1.6rem;color:#0F2A1D;line-height:1.2;margin-bottom:0.4rem;">{seg_name}</div>'
+            f'<div style="font-size:0.85rem;color:#4A6355;">{seg_info.get("desc","")}</div>'
+            f'<div style="font-size:0.82rem;color:#374151;margin-top:0.5rem;line-height:1.5;">{seg_rationale}</div>'
+            f'<div style="font-size:0.75rem;color:#9CA3AF;margin-top:0.5rem;">Rule-based profile | Based on your diagnostic inputs</div>'
+            f'<div style="font-size:0.8rem;color:#374151;margin-top:0.6rem;border-top:1px solid #E5E7EB;padding-top:0.5rem;">The interventions below prioritise <b>{top_priority}</b> to match your school\'s profile.</div>'
+            f'</div>'
+
+            # Panel 2 — profiles list
+            f'<div style="flex:2;background:#FFFFFF;border:1px solid #E5E7EB;border-radius:12px;padding:1rem 1.1rem;box-sizing:border-box;">'
+            f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#6B7280;margin-bottom:0.5rem;">School profiles</div>'
+        )
+        for _sname, _sdata in SEGMENT_INFO.items():
+            if _sname == seg_name:
+                _html += (
+                    f'<div style="border-left:3px solid {_sdata["color"]};background:{_sdata["color"]}12;'
+                    f'padding:0.4rem 0.6rem;border-radius:6px;margin-bottom:0.4rem;'
+                    f'font-size:0.78rem;color:#1F2937;display:flex;align-items:center;gap:0.4rem;">'
+                    f'<span>{_sdata["icon"]}</span><b>{_sname}</b></div>'
+                )
+            else:
+                _html += (
+                    f'<div style="border-left:3px solid #E5E7EB;background:#F9FAFB;'
+                    f'padding:0.4rem 0.6rem;border-radius:6px;margin-bottom:0.4rem;'
+                    f'font-size:0.78rem;color:#9CA3AF;display:flex;align-items:center;gap:0.4rem;">'
+                    f'<span>{_sdata["icon"]}</span>{_sname}</div>'
+                )
+        _html += '</div>'
+
+        # Panel 3 — intervention focus
+        _html += (
+            f'<div style="flex:1.5;background:#FFFFFF;border:1px solid #E5E7EB;border-radius:12px;padding:1rem 1.1rem;box-sizing:border-box;">'
+            f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#6B7280;margin-bottom:0.5rem;">Intervention focus</div>'
+        )
+        for _cat_key, _cat_icon, _cat_label in _all_cats:
+            if _cat_key in _priorities:
+                _rank = _priorities.index(_cat_key) + 1
+                _html += (
+                    f'<div style="border-left:3px solid {_seg_color};background:#fff;'
+                    f'padding:0.4rem 0.6rem;border-radius:6px;margin-bottom:0.45rem;'
+                    f'font-size:0.78rem;color:#1F2937;display:flex;justify-content:space-between;align-items:center;">'
+                    f'<span>{_cat_icon} <b>{_cat_label}</b></span>'
+                    f'<span style="font-size:0.65rem;color:{_seg_color};white-space:nowrap;margin-left:0.3rem;">#{_rank}</span></div>'
+                )
+            else:
+                _html += (
+                    f'<div style="border-left:3px solid #E5E7EB;background:#F9FAFB;'
+                    f'padding:0.4rem 0.6rem;border-radius:6px;margin-bottom:0.45rem;'
+                    f'font-size:0.78rem;color:#9CA3AF;">'
+                    f'{_cat_icon} {_cat_label}</div>'
+                )
+        _html += '</div></div>'
+
+        st.markdown(_html, unsafe_allow_html=True)
 
         traj = risk_result['trajectory']
 
@@ -1556,7 +1549,7 @@ with tab2:
                     </div>
                     <div style="width:84px; border-left:1px solid #E2EDE7; flex-shrink:0;
                                 display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0.5rem;">
-                        <div style="font-family:'DM Serif Display',serif; font-size:1.9rem; color:#1D9E75; line-height:1;">
+                        <div style="font-family:'DM Serif Display',serif; font-size:1.6rem; color:#1D9E75; line-height:1; white-space:nowrap;">
                             –{realistic_contrib:.1f}
                         </div>
                         <div style="font-size:0.65rem; color:#9CA3AF; margin-top:0.2rem;">pts gap</div>
