@@ -101,6 +101,7 @@ def get_equity_risk_score(
     bullying_severity=2,
     ability_grouping='No',
     negsclim=2,
+    computers_per_student=0.5,
 ):
     """
     Three-component equity risk score (0–100):
@@ -109,8 +110,8 @@ def get_equity_risk_score(
       C. School profile score (0–30): OLS regression weights (PISA 2022, n=15238)
            ABGMATH    β=+1.225 (ability grouping widens gap)
            NEGSCLIM   β=+0.885 (negative climate widens gap)
-           SC061Q05TA β=−1.468 (bullying compresses gap — protective effect)
-         # TODO: add RATCMP1 (β=−0.574) once computers-per-student input is collected
+           SC061Q05TA β=−1.468 (bullying compresses gap — treated as risk factor)
+           RATCMP1    β=−0.574 (more computers narrows gap — inverted for risk)
     """
     # Get country gap from gap dataset (2022)
     gap_2022 = df_gap[df_gap['YEAR'].astype(str) == '2022']
@@ -148,10 +149,18 @@ def get_equity_risk_score(
     ability_01   = 1.0 if str(ability_grouping) == 'Yes' else 0.0
     climate_01   = (float(negsclim) - 1) / 3.0
     bullying_01  = (float(bullying_severity) - 1) / 3.0
+    # RATCMP1 narrows the gap (β=−0.574), so fewer computers = more risk.
+    # Input range 0–1 computers/student; clipped and inverted so 0 cmp/student → 1.0 risk.
+    digital_01   = 1.0 - float(np.clip(computers_per_student, 0.0, 1.0))
 
-    # Weights = |β|; range: 0 → (1.225 + 0.885 + 1.468) = 3.578
-    contribution = (1.225 * ability_01) + (0.885 * climate_01) + (1.468 * bullying_01)
-    school_score = float(np.clip(contribution / 3.578 * 30, 0, 30))
+    # Weights = |β|; range: 0 → (1.225 + 0.885 + 1.468 + 0.574) = 4.152
+    contribution = (
+        1.225 * ability_01 +
+        0.885 * climate_01 +
+        1.468 * bullying_01 +
+        0.574 * digital_01
+    )
+    school_score = float(np.clip(contribution / 4.152 * 30, 0, 30))
 
     equity_risk = float(np.clip(
         gap_score + traj_score + school_score,

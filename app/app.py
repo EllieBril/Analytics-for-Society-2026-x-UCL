@@ -714,7 +714,9 @@ with tab1:
         st.caption(
             'All 4 significant at p<0.05 (country-clustered SEs) | '
             'Green = Narrows Gap · Red = Widens Gap | '
-            'Controls: School SES + Country FE | n=15,238 schools, 80 countries'
+            'Controls: School SES + Country FE | n=15,238 schools, 80 countries | '
+            'R² = 0.21 — coefficients used for relative weighting, not gap prediction; '
+            'findings are observational and do not establish causal effects.'
         )
 
     with ols_col2:
@@ -939,7 +941,7 @@ with tab2:
             help='How often does student behaviour disrupt lessons?'
         )
 
-    diag5, diag6, diag_spacer1, diag_spacer2 = st.columns(4)
+    diag5, diag6, diag7, diag_spacer1 = st.columns(4)
 
     with diag5:
         bullying_severity = st.select_slider(
@@ -959,9 +961,47 @@ with tab2:
             help='Does your school group students by ability for maths classes? (PISA SC042/SC187)'
         )
 
+    with diag7:
+        computers_per_100 = st.number_input(
+            'Computers per 100 students',
+            min_value=0,
+            max_value=100,
+            value=50,
+            step=5,
+            help='How many computers are available for student instruction per 100 students? (PISA RATCMP1). 100 = one device per student.'
+        )
+        computers_per_student = computers_per_100 / 100
+
     st.markdown('<div class="section-title">Current practices</div>',
                 unsafe_allow_html=True)
     st.caption('Select interventions already in place — these will be excluded from recommendations')
+
+    INTERVENTION_DESCRIPTIONS = {
+        'Metacognition & self-regulation': 'Teaching students how to plan, monitor, and evaluate their own learning — e.g. self-quizzing, goal-setting, reflection. One of the highest-impact low-cost strategies in the EEF toolkit.',
+        'Reading comprehension strategies': 'Explicit instruction in techniques like summarising, questioning, and inference to improve understanding of text across subjects.',
+        'Feedback': 'Structured, timely feedback to students on their work — focused on what to improve and how, rather than just grades. Distinct from general praise.',
+        'Oral language interventions': 'Structured programmes to develop spoken language skills — vocabulary, discussion, and oracy — particularly impactful for disadvantaged students in early years and primary.',
+        'Peer tutoring': 'Structured programmes where students teach or support each other — e.g. paired reading, cross-age tutoring. Different from unstructured group work.',
+        'Collaborative learning': 'Structured approaches where small groups work together on tasks with clear roles and accountability — more formal than general group work.',
+        'Homework': 'Structured assignments completed outside school hours. Evidence is stronger at secondary level; less clear at primary.',
+        'Mastery learning': 'Students must demonstrate mastery of a concept before moving on. Typically involves frequent low-stakes assessments and corrective instruction for those who haven\'t yet mastered the material.',
+        'One to one tuition': 'Individual tuition with a qualified teacher or trained tutor, outside normal lessons. High impact but relatively expensive.',
+        'Phonics': 'Systematic phonics instruction — teaching the relationship between letters and sounds. Strongest evidence base is for early reading in primary school.',
+        'Individualised instruction': 'Tailoring teaching content, pace, or method to individual student needs — can include adaptive technology or differentiated lesson planning.',
+        'Parental engagement': 'Structured programmes to involve parents in supporting learning at home — e.g. reading schemes, maths workshops, regular communication about curriculum.',
+        'Small group tuition': 'Tuition in groups of 2–5 students, delivered by a teacher or trained teaching assistant, outside or alongside normal lessons.',
+        'Teaching assistant interventions': 'Structured programmes where teaching assistants deliver targeted support — distinct from general classroom assistance. Effectiveness depends heavily on training and programme quality.',
+        'Arts participation': 'Structured arts programmes (drama, music, visual arts) embedded in or alongside the curriculum, with a focus on academic outcomes rather than arts for its own sake.',
+        'Behaviour interventions': 'Targeted programmes to address disruptive behaviour — e.g. restorative practice, CBT-based approaches, school-wide positive behaviour support.',
+        'Extending school time': 'Formally extending the school day or year to provide additional learning time — includes breakfast clubs, after-school programmes, and longer school years.',
+        'Social & emotional learning': 'Programmes that develop emotional regulation, empathy, and social skills — e.g. PATHS, MindUP. Impacts academic outcomes indirectly through improved behaviour and engagement.',
+        'Summer schools': 'Intensive programmes during summer holidays to prevent learning loss or accelerate progress, typically targeting disadvantaged or at-risk students.',
+        'Mentoring': 'One-to-one relationships between a student and an adult mentor (not their teacher), focused on motivation, confidence, and broader life skills rather than specific subject content.',
+        'Physical activity': 'Structured physical activity programmes embedded in the school day — some evidence for improved concentration and attainment, particularly in primary.',
+        'Within class attainment grouping': 'Grouping students by attainment within a single class for specific subjects or tasks — distinct from setting across classes. Evidence suggests smaller, more flexible groups work better.',
+        'Reducing class size': 'Permanently reducing the number of students per teacher. High cost with modest average impact — evidence suggests benefits are strongest below 20 students and in early years.',
+        'Performance pay': 'Linking teacher pay to student outcomes or performance appraisal. Evidence of impact on attainment is weak and findings are mixed across contexts.',
+    }
 
     all_interventions = df_interventions['intervention'].tolist()
     col_p1, col_p2, col_p3 = st.columns(3)
@@ -970,15 +1010,15 @@ with tab2:
 
     with col_p1:
         for item in all_interventions[:chunk]:
-            if st.checkbox(item, key=f'existing_{item}'):
+            if st.checkbox(item, key=f'existing_{item}', help=INTERVENTION_DESCRIPTIONS.get(item)):
                 existing.append(item)
     with col_p2:
         for item in all_interventions[chunk:chunk*2]:
-            if st.checkbox(item, key=f'existing_{item}'):
+            if st.checkbox(item, key=f'existing_{item}', help=INTERVENTION_DESCRIPTIONS.get(item)):
                 existing.append(item)
     with col_p3:
         for item in all_interventions[chunk*2:]:
-            if st.checkbox(item, key=f'existing_{item}'):
+            if st.checkbox(item, key=f'existing_{item}', help=INTERVENTION_DESCRIPTIONS.get(item)):
                 existing.append(item)
 
     st.markdown('<br>', unsafe_allow_html=True)
@@ -993,6 +1033,7 @@ with tab2:
             bullying_severity=bullying_severity,
             ability_grouping=ability_grouping,
             negsclim=behaviour_disruption,
+            computers_per_student=computers_per_student,
         )
 
         # ── Predict school segment ────────────────────────────────────────────
@@ -1543,7 +1584,8 @@ with tab2:
             country gap score (0–50): normalised SES maths gap vs global mean;
             trajectory score (0–20): Closing=0, Stable=10, Widening=20;
             school profile score (0–30): OLS regression weights from 15,238 PISA 2022 schools
-            (ability grouping |β|=1.23, school climate |β|=0.89, student bullying |β|=1.47;
+            (ability grouping |β|=1.23, school climate |β|=0.89, student bullying |β|=1.47,
+            computers per 100 students |β|=0.57 — inverted so low access = higher risk;
             country fixed effects, clustered standard errors; R²=0.21).<br>
             <b>Gap reduction:</b> EEF impact estimates applied to disadvantaged students only
             (target group scaling × disadvantaged %), with diminishing returns (0.7<sup>i</sup> decay)
