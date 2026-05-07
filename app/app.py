@@ -1043,7 +1043,8 @@ with tab2:
             staffshort=staff_shortage,
             edushort=resource_shortage,
             negsclim=behaviour_disruption,
-            disadvantaged_pct=disadvantaged_pct / 100
+            disadvantaged_pct=disadvantaged_pct / 100,
+            computers_per_student=computers_per_student,
         )
 
         int_result = get_interventions(
@@ -1491,29 +1492,38 @@ with tab2:
                     f'font-weight:600; padding:2px 8px; border-radius:10px; margin-left:6px;">'
                     f'{_cs["label"]}</span>'
                 )
+                _desc = INTERVENTION_DESCRIPTIONS.get(row['intervention'], '')
+                _desc_html = (
+                    f'<div style="font-size:0.78rem; color:#4A6355; margin-top:0.35rem; line-height:1.5;'
+                    f'display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">'
+                    f'{_desc}</div>'
+                ) if _desc else ''
                 st.markdown(f"""
-                <div class="intervention-card">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start">
-                        <div class="intervention-name">
-                            #{int(row['rank'])} {row['intervention']}{profile_badge}{cat_badge}
+                <div class="intervention-card" style="display:flex; gap:0; padding:0; overflow:hidden; min-height:130px;">
+                    <div style="width:44px; background:#F7FAF8; border-right:1px solid #E2EDE7;
+                                display:flex; align-items:flex-start; justify-content:center; padding-top:1rem; flex-shrink:0;">
+                        <span style="font-family:'DM Serif Display',serif; font-size:1.3rem;
+                                     color:#1D9E75; line-height:1;">{int(row['rank'])}</span>
+                    </div>
+                    <div style="flex:1; padding:0.85rem 0.9rem; display:flex; flex-direction:column; justify-content:space-between;">
+                        <div>
+                            <div class="intervention-name">{row['intervention']}{profile_badge}{cat_badge}</div>
+                            {_desc_html}
                         </div>
-                        <div style="text-align:right;">
-                            <div style="font-family:'DM Serif Display',serif; font-size:1.3rem; color:#1D9E75; line-height:1.1;">
-                                –{realistic_contrib:.1f} pts
-                            </div>
-                            <div style="font-size:0.68rem; color:#9CA3AF;">
-                                to your equity gap
-                            </div>
-                            <div style="font-size:0.68rem; color:#9CA3AF;">
-                                EEF raw: –{row['gap_reduction_pts']:.0f} pts
-                            </div>
+                        <div class="intervention-meta" style="margin-top:0.5rem">
+                            <span class="badge {cost_color}">{cost_labels.get(int(row['cost_rating']), '£')}</span>
+                            <span class="badge badge-blue">£{int(row['total_cost']):,} total</span>
+                            <span class="badge badge-gray">Evidence: {evidence_stars.get(int(row['evidence']), '○○○○○')}</span>
+                            <span class="badge badge-gray">{int(row['impact_months'])} months impact</span>
                         </div>
                     </div>
-                    <div class="intervention-meta" style="margin-top:0.5rem">
-                        <span class="badge {cost_color}">{cost_labels.get(int(row['cost_rating']), '£')}</span>
-                        <span class="badge badge-blue">£{int(row['total_cost']):,} total</span>
-                        <span class="badge badge-gray">Evidence: {evidence_stars.get(int(row['evidence']), '○○○○○')}</span>
-                        <span class="badge badge-gray">{int(row['impact_months'])} months impact</span>
+                    <div style="width:84px; border-left:1px solid #E2EDE7; flex-shrink:0;
+                                display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0.5rem;">
+                        <div style="font-family:'DM Serif Display',serif; font-size:1.9rem; color:#1D9E75; line-height:1;">
+                            –{realistic_contrib:.1f}
+                        </div>
+                        <div style="font-size:0.65rem; color:#9CA3AF; margin-top:0.2rem;">pts gap</div>
+                        <div style="font-size:0.6rem; color:#C4D4CC; margin-top:0.25rem;">EEF: –{row['gap_reduction_pts']:.0f} pts</div>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)

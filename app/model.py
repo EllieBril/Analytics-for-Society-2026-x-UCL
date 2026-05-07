@@ -12,7 +12,7 @@ SEGMENT_INFO = {
     'High-achievement unequal schools': {
         'icon': chr(0x1F7E0), 'color': '#D96C06',
         'desc': 'Higher maths performance but sizeable within-school SES inequality.',
-        'priorities': ['learning_support', 'family_engagement', 'climate_support'],
+        'priorities': ['climate_support', 'learning_support', 'family_engagement'],
     },
     'Low-achievement broad support need': {
         'icon': chr(0x1F535), 'color': '#2F6690',
@@ -32,24 +32,34 @@ SEGMENT_INFO = {
 }
 
 INTERVENTION_CATEGORIES = {
+    # ── Learning support: class-based academic strategies, low cost ──────────
     'Metacognition & self-regulation': 'learning_support',
-    'Feedback': 'learning_support',
-    'Mastery learning': 'learning_support',
-    'Individualised instruction': 'learning_support',
-    'Peer tutoring': 'learning_support',
-    'Small group tuition': 'learning_support',
-    'One to one tuition': 'learning_support',
     'Reading comprehension strategies': 'learning_support',
-    'Homework': 'learning_support',
-    'Phonics': 'learning_support',
-    'Behaviour interventions': 'climate_support',
-    'Social & emotional learning': 'climate_support',
-    'Mentoring': 'climate_support',
-    'Collaborative learning': 'climate_support',
-    'Parental engagement': 'family_engagement',
-    'Reducing class size': 'resource_intensive',
+    'Feedback':                         'learning_support',
+    'Oral language interventions':      'learning_support',
+    'Mastery learning':                 'learning_support',
+    'Phonics':                          'learning_support',
+    'Individualised instruction':       'learning_support',
+    'Within class attainment grouping': 'learning_support',
+    # ── Climate support: social, emotional, relational ───────────────────────
+    'Peer tutoring':                    'climate_support',
+    'Collaborative learning':           'climate_support',
+    'Social & emotional learning':      'climate_support',
+    'Behaviour interventions':          'climate_support',
+    'Arts participation':               'climate_support',
+    'Physical activity':                'climate_support',
+    'Mentoring':                        'climate_support',
+    # ── Family engagement: out-of-school, family-facing ─────────────────────
+    'Parental engagement':              'family_engagement',
+    'Homework':                         'family_engagement',
+    'Summer schools':                   'family_engagement',
+    # ── Resource intensive: high cost or staffing-heavy ──────────────────────
+    'Small group tuition':              'resource_intensive',
+    'One to one tuition':               'resource_intensive',
     'Teaching assistant interventions': 'resource_intensive',
-    'Extending school time': 'resource_intensive',
+    'Extending school time':            'resource_intensive',
+    'Reducing class size':              'resource_intensive',
+    'Performance pay':                  'resource_intensive',
 }
 
 
@@ -63,25 +73,28 @@ def _load_segment_bundle():
     return _segment_bundle
 
 
-def predict_segment(risk_score, school_mean_math, staffshort, edushort, negsclim, disadvantaged_pct):
+def predict_segment(risk_score, school_mean_math, staffshort, edushort, negsclim, disadvantaged_pct,
+                    computers_per_student=0.5):
     # Rule-based segmentation using only app-available inputs.
     # Thresholds: OECD 2022 average maths = 472; risk score median ≈ 44 (PISA 2022 schools).
-    MATH_CUT  = 472   # OECD 2022 average maths score
-    RISK_CUT  = 55    # elevated school-level risk (above global median + ~0.5 SD)
-    STRAIN_CUT = 3    # slider value: "To some extent" or "A lot"
+    MATH_CUT     = 472   # OECD 2022 average maths score
+    RISK_CUT     = 55    # elevated school-level risk (above global median + ~0.5 SD)
+    STRAIN_CUT   = 3     # slider value: "To some extent" or "A lot"
+    DIGITAL_CUT  = 0.25  # fewer than 25 computers per 100 students = digitally constrained
 
-    high_math    = school_mean_math >= MATH_CUT
-    high_risk    = risk_score >= RISK_CUT
-    high_strain  = (int(staffshort) >= STRAIN_CUT) or (int(edushort) >= STRAIN_CUT)
-    high_climate = int(negsclim) >= STRAIN_CUT
+    high_math     = school_mean_math >= MATH_CUT
+    high_risk     = risk_score >= RISK_CUT
+    high_strain   = (int(staffshort) >= STRAIN_CUT) or (int(edushort) >= STRAIN_CUT)
+    high_climate  = int(negsclim) >= STRAIN_CUT
+    low_digital   = float(computers_per_student) < DIGITAL_CUT
 
-    if high_math and not high_risk:
+    if low_digital:
+        segment = 'Digitally constrained schools'
+    elif high_math and not high_risk:
         segment = 'Resilient equitable performers'
     elif high_math and high_risk:
         segment = 'High-achievement unequal schools'
-    elif not high_math and int(edushort) == 4:
-        segment = 'Digitally constrained schools'
-    elif not high_math and (high_risk or high_strain or high_climate):
+    elif high_risk or high_strain or high_climate:
         segment = 'Strained high-inequality schools'
     else:
         segment = 'Low-achievement broad support need'
