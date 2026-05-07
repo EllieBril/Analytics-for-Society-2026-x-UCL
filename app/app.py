@@ -1243,44 +1243,98 @@ with tab2:
             </div>
             """, unsafe_allow_html=True)
 
-        # ── WITHIN-COUNTRY SCHOOL COMPARISON ─────────────────────────────────
-        st.markdown(f'<div class="section-title">How your school compares within {country}</div>',
+        # ── GLOBAL → COUNTRY → SCHOOL COMPARISON ────────────────────────────
+        st.markdown('<div class="section-title">From global picture to your school</div>',
                     unsafe_allow_html=True)
 
         df_country = df_scores[df_scores['CNT'] == country].copy()
 
+        _gap_2022_sc = df_gap[df_gap['YEAR'].astype(str) == '2022'].copy()
+        _gap_2022_sc = _gap_2022_sc.merge(df_traj[['CNT', 'TRAJECTORY']], on='CNT', how='left')
+        _gap_2022_sc['TRAJECTORY'] = _gap_2022_sc['TRAJECTORY'].fillna('No data')
+        _global_avg_gap  = float(_gap_2022_sc['GAP'].mean())
+        _global_avg_math = float(_gap_2022_sc['AVG_MATH'].mean())
+
+        col_global, col_country, col_school = st.columns(3)
+
+        # ── Col 1: Global scatter, selected country highlighted ───────────────
+        with col_global:
+            _others = _gap_2022_sc[_gap_2022_sc['CNT'] != country]
+            _selected = _gap_2022_sc[_gap_2022_sc['CNT'] == country]
+
+            fig_global_sc = go.Figure()
+            fig_global_sc.add_trace(go.Scatter(
+                x=_others['GAP'], y=_others['AVG_MATH'],
+                mode='markers',
+                marker=dict(size=6, color='#D1D5DB', opacity=0.7,
+                            line=dict(width=0.5, color='white')),
+                hovertemplate='<b>%{text}</b><br>Gap: %{x:.1f} pts<br>Score: %{y:.0f}<extra></extra>',
+                text=_others['CNT'],
+                showlegend=False,
+                name='Other countries'
+            ))
+            if len(_selected) > 0:
+                fig_global_sc.add_trace(go.Scatter(
+                    x=_selected['GAP'], y=_selected['AVG_MATH'],
+                    mode='markers+text',
+                    marker=dict(size=14, color='#1D9E75', symbol='diamond',
+                                line=dict(width=2, color='white')),
+                    text=[country],
+                    textposition='top center',
+                    textfont=dict(size=11, color='#0F2A1D', family='DM Sans'),
+                    hovertemplate='<b>%{text}</b><br>Gap: %{x:.1f} pts<br>Score: %{y:.0f}<extra></extra>',
+                    showlegend=False,
+                    name=country
+                ))
+            fig_global_sc.add_vline(x=_global_avg_gap,  line_dash='dash', line_color='#9CA3AF', line_width=1)
+            fig_global_sc.add_hline(y=_global_avg_math, line_dash='dash', line_color='#9CA3AF', line_width=1)
+            fig_global_sc.add_annotation(
+                x=_gap_2022_sc['GAP'].min() + 3, y=_gap_2022_sc['AVG_MATH'].max() - 10,
+                text='<b>Ideal</b>', showarrow=False,
+                font=dict(size=9, color='#1D9E75'), bgcolor='rgba(29,158,117,0.1)'
+            )
+            fig_global_sc.update_layout(
+                title=dict(text='Performance vs Equity Gap — all countries',
+                           font=dict(size=12, color='#1F2937'), x=0.5, xanchor='center'),
+                xaxis=dict(title=dict(text='Equity gap (pts) — lower is better', font=dict(color='#374151', size=10)),
+                           tickfont=dict(color='#374151', size=10)),
+                yaxis=dict(title=dict(text='Avg maths score', font=dict(color='#374151', size=10)),
+                           tickfont=dict(color='#374151', size=10)),
+                plot_bgcolor='white', paper_bgcolor='white',
+                height=340, margin=dict(l=40, r=15, t=50, b=40),
+                font=dict(family='DM Sans', color='#374151')
+            )
+            st.plotly_chart(fig_global_sc, use_container_width=True)
+            st.caption(f'{country} highlighted · dashed lines = global averages · PISA 2022')
+
         if len(df_country) < 5:
-            st.info(f'Not enough school data for {country} to show a within-country comparison.')
+            with col_country:
+                st.info(f'Not enough school data for {country} to show a within-country distribution.')
+            with col_school:
+                st.empty()
         else:
             n_schools = len(df_country)
             country_median = round(float(df_country['EQUITY_RISK_SCORE'].median()), 1)
 
-            # Percentile: % of country schools with score ≤ user's score
             _pct = round(float((df_country['EQUITY_RISK_SCORE'] <= risk_score).mean() * 100), 1)
-            _pct_label = f'{_pct}th' if not (11 <= int(_pct) % 100 <= 13) else f'{_pct}th'
             _pct_suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(int(_pct) % 10, 'th') if not (11 <= int(_pct) % 100 <= 13) else 'th'
             _pct_display = f'{_pct:.0f}{_pct_suffix}'
 
-            # Dynamic axis: always include user's score
             scores = df_country['EQUITY_RISK_SCORE']
             spread = scores.max() - scores.min()
             pad = max(spread * 0.12, 3)
             x_min = max(0,   round(min(scores.min(), risk_score) - pad, 1))
             x_max = min(100, round(max(scores.max(), risk_score) + pad, 1))
 
-            dist_col, profile_col = st.columns(2)
-
-            with dist_col:
+            # ── Col 2: Schools within country ─────────────────────────────────
+            with col_country:
                 fig_dist = go.Figure()
-
-                # Risk-zone bands clipped to visible range
                 fig_dist.add_vrect(x0=x_min, x1=min(40, x_max),
                     fillcolor='rgba(29,158,117,0.10)', line_width=0)
                 fig_dist.add_vrect(x0=max(40, x_min), x1=min(65, x_max),
                     fillcolor='rgba(239,159,39,0.10)', line_width=0)
                 fig_dist.add_vrect(x0=max(65, x_min), x1=x_max,
                     fillcolor='rgba(227,18,11,0.10)', line_width=0)
-
                 fig_dist.add_trace(go.Histogram(
                     x=scores,
                     xbins=dict(start=x_min, end=x_max, size=max((x_max - x_min) / 25, 0.5)),
@@ -1292,38 +1346,33 @@ with tab2:
                     x=risk_score, line_color='#0F2A1D', line_width=2.5,
                     annotation_text=f'Your school: {risk_score} ({_pct_display} pct.)',
                     annotation_position='top',
-                    annotation_font=dict(color='#0F2A1D', size=11, family='DM Sans')
+                    annotation_font=dict(color='#0F2A1D', size=10, family='DM Sans')
                 )
                 fig_dist.add_vline(
                     x=country_median, line_color='#6B7280', line_width=1.5, line_dash='dash',
                     annotation_text=f'Median: {country_median}',
                     annotation_position='top right',
-                    annotation_font=dict(color='#6B7280', size=10, family='DM Sans')
+                    annotation_font=dict(color='#6B7280', size=9, family='DM Sans')
                 )
                 fig_dist.update_layout(
-                    title=dict(text=f'School equity risk distribution — {country}',
-                               font=dict(size=13, color='#1F2937'), x=0.5, xanchor='center'),
-                    xaxis=dict(
-                        title=dict(text='Equity risk score', font=dict(color='#374151')),
-                        tickfont=dict(color='#374151'),
-                        range=[x_min, x_max]
-                    ),
-                    yaxis=dict(
-                        title=dict(text='Number of schools', font=dict(color='#374151')),
-                        tickfont=dict(color='#374151')
-                    ),
+                    title=dict(text=f'School risk distribution — {country}',
+                               font=dict(size=12, color='#1F2937'), x=0.5, xanchor='center'),
+                    xaxis=dict(title=dict(text='Equity risk score', font=dict(color='#374151', size=10)),
+                               tickfont=dict(color='#374151', size=10), range=[x_min, x_max]),
+                    yaxis=dict(title=dict(text='Number of schools', font=dict(color='#374151', size=10)),
+                               tickfont=dict(color='#374151', size=10)),
                     plot_bgcolor='white', paper_bgcolor='white',
-                    height=340, margin=dict(l=40, r=20, t=50, b=40),
+                    height=340, margin=dict(l=40, r=15, t=50, b=40),
                     showlegend=False, font=dict(family='DM Sans', color='#374151')
                 )
                 st.plotly_chart(fig_dist, use_container_width=True)
                 st.caption(
                     f'n = {n_schools} schools in {country} · PISA 2022 · '
-                    f'Your school is in the {_pct_display} percentile · '
-                    f'Scores based on self-reported inputs vs PISA-measured values for comparison schools'
+                    f'Your school is in the {_pct_display} percentile'
                 )
 
-            with profile_col:
+            # ── Col 3: Risk score breakdown ────────────────────────────────────
+            with col_school:
                 _components = {
                     'Country gap':    (gap_score,    50,  '#2F6690'),
                     'Trend':          (traj_score,   20,  '#EF9F27'),
@@ -1331,35 +1380,24 @@ with tab2:
                 }
                 fig_breakdown = go.Figure()
                 for _cname, (_cval, _cmax, _ccol) in _components.items():
-                    # Background bar (max possible)
                     fig_breakdown.add_trace(go.Bar(
-                        y=[_cname], x=[_cmax],
-                        orientation='h',
-                        marker_color='#F3F4F6',
-                        showlegend=False,
-                        hoverinfo='skip',
+                        y=[_cname], x=[_cmax], orientation='h',
+                        marker_color='#F3F4F6', showlegend=False, hoverinfo='skip',
                     ))
-                    # Filled bar (actual value)
                     fig_breakdown.add_trace(go.Bar(
-                        y=[_cname], x=[_cval],
-                        orientation='h',
-                        marker_color=_ccol,
-                        showlegend=False,
-                        text=f'{_cval}',
-                        textposition='outside',
+                        y=[_cname], x=[_cval], orientation='h',
+                        marker_color=_ccol, showlegend=False,
+                        text=f'{_cval}', textposition='outside',
                         textfont=dict(color=_ccol, size=12, family='DM Sans'),
                         hovertemplate=f'<b>{_cname}</b>: {_cval} / {_cmax}<extra></extra>',
                     ))
                 fig_breakdown.update_layout(
                     barmode='overlay',
-                    title=dict(text='Risk score breakdown',
-                               font=dict(size=13, color='#1F2937'), x=0.5, xanchor='center'),
-                    xaxis=dict(
-                        title=dict(text='Score', font=dict(color='#374151')),
-                        tickfont=dict(color='#374151'),
-                        range=[0, 55],
-                    ),
-                    yaxis=dict(tickfont=dict(color='#1F2937', size=12)),
+                    title=dict(text='Your risk score breakdown',
+                               font=dict(size=12, color='#1F2937'), x=0.5, xanchor='center'),
+                    xaxis=dict(title=dict(text='Score', font=dict(color='#374151', size=10)),
+                               tickfont=dict(color='#374151', size=10), range=[0, 55]),
+                    yaxis=dict(tickfont=dict(color='#1F2937', size=11)),
                     plot_bgcolor='white', paper_bgcolor='white',
                     height=340, margin=dict(l=20, r=60, t=50, b=40),
                     font=dict(family='DM Sans', color='#374151'),
@@ -1367,8 +1405,7 @@ with tab2:
                 )
                 st.plotly_chart(fig_breakdown, use_container_width=True)
                 st.caption(
-                    f'Country gap (max 50) + Trend (max 20) + School profile (max 30) = {risk_score}/100 · '
-                    f'School profile reflects your reported inputs'
+                    f'Country gap (max 50) + Trend (max 20) + School profile (max 30) = {risk_score}/100'
                 )
 
         # ── GAP PROJECTION WATERFALL ──────────────────────────────────────────
