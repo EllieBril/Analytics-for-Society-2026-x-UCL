@@ -235,15 +235,18 @@ st.markdown("""
         border-color: #D1D5DB !important;
     }
 
-    /* Number input stepper buttons (– and +) */
-    [data-testid="stNumberInput"] button,
-    [data-testid="stNumberInput"] button svg {
+    /* Number input stepper buttons (– and +) only, not the help icon */
+    [data-testid="stNumberInputStepDown"],
+    [data-testid="stNumberInputStepUp"],
+    [data-testid="stNumberInputStepDown"] svg,
+    [data-testid="stNumberInputStepUp"] svg {
         background-color: #F3F4F6 !important;
         color: #1F2937 !important;
         fill: #1F2937 !important;
         border-color: #D1D5DB !important;
     }
-    [data-testid="stNumberInput"] button:hover {
+    [data-testid="stNumberInputStepDown"]:hover,
+    [data-testid="stNumberInputStepUp"]:hover {
         background-color: #E5E7EB !important;
     }
 
