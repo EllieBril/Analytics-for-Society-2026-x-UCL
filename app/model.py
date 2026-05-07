@@ -64,35 +64,54 @@ def _load_segment_bundle():
 
 
 def predict_segment(risk_score, school_mean_math, staffshort, edushort, negsclim, disadvantaged_pct):
-    bundle = _load_segment_bundle()
-    mdl = bundle['model']
-    le = bundle['label_encoder']
-    school_mean_escs = 0.5 - (disadvantaged_pct * 2.0)
-    features = pd.DataFrame([{
-        'EQUITY_RISK_SCORE': risk_score,
-        'school_mean_math': school_mean_math,
-        'STAFFSHORT_b': float(staffshort),
-        'EDUSHORT_b': float(edushort),
-        'NEGSCLIM_b': float(negsclim),
-        'school_mean_escs': school_mean_escs,
-    }])
-    segment = le.inverse_transform(mdl.predict(features))[0]
-    probas = dict(zip(le.classes_, mdl.predict_proba(features)[0]))
+    # Rule-based segmentation using only app-available inputs.
+    # Thresholds: OECD 2022 average maths = 472; risk score median ≈ 44 (PISA 2022 schools).
+    MATH_CUT  = 472   # OECD 2022 average maths score
+    RISK_CUT  = 55    # elevated school-level risk (above global median + ~0.5 SD)
+    STRAIN_CUT = 3    # slider value: "To some extent" or "A lot"
+
+    high_math    = school_mean_math >= MATH_CUT
+    high_risk    = risk_score >= RISK_CUT
+    high_strain  = (int(staffshort) >= STRAIN_CUT) or (int(edushort) >= STRAIN_CUT)
+    high_climate = int(negsclim) >= STRAIN_CUT
+
+    if high_math and not high_risk:
+        segment = 'Resilient equitable performers'
+    elif high_math and high_risk:
+        segment = 'High-achievement unequal schools'
+    elif not high_math and int(edushort) == 4:
+        segment = 'Digitally constrained schools'
+    elif not high_math and (high_risk or high_strain or high_climate):
+        segment = 'Strained high-inequality schools'
+    else:
+        segment = 'Low-achievement broad support need'
+
     return {
         'segment': segment,
-        'confidence': round(max(probas.values()) * 100, 1),
-        'probabilities': {k: round(v * 100, 1) for k, v in probas.items()},
+        'confidence': None,
+        'probabilities': {},
         'info': SEGMENT_INFO.get(segment, {}),
     }
 
 
 def get_equity_risk_score(
     country_code,
-    school_type,
-    stratio,
     df_traj,
-    df_gap
+    df_gap,
+    bullying_severity=2,
+    ability_grouping='No',
+    negsclim=2,
 ):
+    """
+    Three-component equity risk score (0–100):
+      A. Country gap score   (0–50): normalized SES gap vs global mean
+      B. Trajectory score    (0–20): Closing=0, Stable=10, Widening=20
+      C. School profile score (0–30): OLS regression weights (PISA 2022, n=15238)
+           ABGMATH    β=+1.225 (ability grouping widens gap)
+           NEGSCLIM   β=+0.885 (negative climate widens gap)
+           SC061Q05TA β=−1.468 (bullying compresses gap — protective effect)
+         # TODO: add RATCMP1 (β=−0.574) once computers-per-student input is collected
+    """
     # Get country gap from gap dataset (2022)
     gap_2022 = df_gap[df_gap['YEAR'].astype(str) == '2022']
     country_gap_row = gap_2022[gap_2022['CNT'] == country_code]
@@ -103,15 +122,15 @@ def get_equity_risk_score(
         country_gap = float(country_gap_row['GAP'].values[0])
 
     global_avg = float(gap_2022['GAP'].mean())
-    global_std = float(gap_2022['GAP'].std())  # ddof=1 (sample std, pandas default)
+    global_std = float(gap_2022['GAP'].std())
 
-    # Component A: gap size score (0-60)
+    # Component A: country gap score (0–50)
     gap_score = float(np.clip(
-        30 + (country_gap - global_avg) / global_std * 15,
-        0, 60
+        25 + (country_gap - global_avg) / global_std * 12.5,
+        0, 50
     ))
 
-    # Component B: trajectory score (0-20)
+    # Component B: trajectory score (0–20)
     traj_row = df_traj[df_traj['CNT'] == country_code]
     if len(traj_row) == 0:
         trajectory = 'Unknown'
@@ -121,22 +140,18 @@ def get_equity_risk_score(
         traj_map = {'Closing': 0, 'Stable': 10, 'Widening': 20}
         traj_score = traj_map.get(trajectory, 10)
 
-    # Component C: school profile score (0-20)
-    school_score = 10.0
-    schtype_adj = {
-        'Public': 2,
-        'Government-dependent private': 0,
-        'Independent private': -2
-    }
-    school_score += schtype_adj.get(school_type, 0)
+    # Component C: school profile score (0–30) via OLS |β| weights
+    # All three inputs are treated as positive risk factors regardless of regression sign.
+    # β magnitudes determine relative weight; direction is set by domain logic (more = more risk).
+    # (SC061Q05TA β=−1.468 in the gap regression reflects bullying compressing the SES distribution,
+    #  not that bullying is protective — high bullying is still a school risk factor.)
+    ability_01   = 1.0 if str(ability_grouping) == 'Yes' else 0.0
+    climate_01   = (float(negsclim) - 1) / 3.0
+    bullying_01  = (float(bullying_severity) - 1) / 3.0
 
-    global_median_stratio = 14.4
-    if stratio < global_median_stratio:
-        school_score -= 1
-    elif stratio > global_median_stratio:
-        school_score += 1
-
-    school_score = float(np.clip(school_score, 0, 20))
+    # Weights = |β|; range: 0 → (1.225 + 0.885 + 1.468) = 3.578
+    contribution = (1.225 * ability_01) + (0.885 * climate_01) + (1.468 * bullying_01)
+    school_score = float(np.clip(contribution / 3.578 * 30, 0, 30))
 
     equity_risk = float(np.clip(
         gap_score + traj_score + school_score,

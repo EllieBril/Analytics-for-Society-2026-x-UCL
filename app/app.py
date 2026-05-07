@@ -365,23 +365,12 @@ st.markdown("""
     [data-testid="stHorizontalBlock"]:has(.metric-card) {
         align-items: stretch;
     }
-    [data-testid="stHorizontalBlock"]:has(.metric-card) [data-testid="stColumn"],
-    [data-testid="stHorizontalBlock"]:has(.metric-card) [data-testid="stColumn"] > div,
-    [data-testid="stHorizontalBlock"]:has(.metric-card) [data-testid="stColumn"] > div > div {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-    }
-    [data-testid="stHorizontalBlock"]:has(.metric-card) .metric-card {
-        flex: 1;
-        margin-bottom: 0;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 # ── LOAD DATA ─────────────────────────────────────────────────────────────────
-@st.cache_data
-def load_data():
+@st.cache_data(show_spinner=False)
+def load_data(_version=None):
     base = os.path.join(os.path.dirname(__file__), 'data')
     df_gap    = pd.read_csv(os.path.join(base, 'equity_gap_by_country_year.csv'))
     df_traj   = pd.read_csv(os.path.join(base, 'country_trajectories.csv'))
@@ -389,7 +378,12 @@ def load_data():
     df_int    = pd.read_csv(os.path.join(base, 'intervention_library.csv'))
     return df_gap, df_traj, df_scores, df_int
 
-df_gap, df_traj, df_scores, df_interventions = load_data()
+
+def _data_version():
+    base = os.path.join(os.path.dirname(__file__), 'data')
+    return os.path.getmtime(os.path.join(base, 'school_risk_scores.csv'))
+
+df_gap, df_traj, df_scores, df_interventions = load_data(_version=_data_version())
 
 color_map = {
     'Closing': '#1D9E75',
@@ -572,7 +566,7 @@ with tab1:
     with ins3:
         st.markdown(
             '<div class="insight-box">✅ Top-left = ideal: high scores, low gap. '
-            'Macao and Japan prove high performance and equity can coexist.</div>',
+            'Macao and Hong Kong prove high performance and equity can coexist.</div>',
             unsafe_allow_html=True
         )
 
@@ -581,7 +575,7 @@ with tab1:
                 unsafe_allow_html=True)
     st.markdown("""
     <div class="insight-box">
-        <b>Observational OLS regression</b> on 15,238 schools across 79 countries (PISA 2022).
+        <b>Observational OLS regression</b> on 15,238 schools across 80 countries (PISA 2022).
         Target: within-school maths gap (top vs bottom SES quartile). Controls: school SES composition
         + country fixed effects. Standard errors clustered by country. R² = 0.206.
         <b>Positive β = wider gap; negative β = narrower gap.</b>
@@ -717,7 +711,7 @@ with tab1:
         st.caption(
             'All 4 significant at p<0.05 (country-clustered SEs) | '
             'Green = Narrows Gap · Red = Widens Gap | '
-            'Controls: School SES + Country FE | n=15,238 schools, 79 countries'
+            'Controls: School SES + Country FE | n=15,238 schools, 80 countries'
         )
 
     with ols_col2:
@@ -942,6 +936,25 @@ with tab2:
             help='How often does student behaviour disrupt lessons?'
         )
 
+    diag5, diag6, diag_spacer1, diag_spacer2 = st.columns(4)
+
+    with diag5:
+        bullying_severity = st.select_slider(
+            'Student bullying / intimidation',
+            options=[1, 2, 3, 4],
+            value=2,
+            format_func=lambda x: ['', 'Not at all', 'Very little', 'To some extent', 'A lot'][x],
+            help='How much does student bullying or intimidation hinder learning at your school? (PISA SC061Q05TA)'
+        )
+
+    with diag6:
+        ability_grouping = st.radio(
+            'Ability grouping in maths',
+            options=['No', 'Yes'],
+            index=0,
+            horizontal=True,
+            help='Does your school group students by ability for maths classes? (PISA SC042/SC187)'
+        )
 
     st.markdown('<div class="section-title">Current practices</div>',
                 unsafe_allow_html=True)
@@ -972,10 +985,11 @@ with tab2:
 
         risk_result = get_equity_risk_score(
             country_code=country,
-            school_type=school_type,
-            stratio=stratio,
             df_traj=df_traj,
-            df_gap=df_gap
+            df_gap=df_gap,
+            bullying_severity=bullying_severity,
+            ability_grouping=ability_grouping,
+            negsclim=behaviour_disruption,
         )
 
         # ── Predict school segment ────────────────────────────────────────────
@@ -1050,31 +1064,82 @@ with tab2:
         seg_conf = seg_result['confidence']
         top_priority = seg_info.get('priorities', ['learning support'])[0].replace('_', ' ')
         seg_rationale = SEGMENT_RATIONALE.get(seg_name, '')
-        st.markdown(f"""
-        <div style="background:{seg_info.get('color','#333')}15; border:2px solid {seg_info.get('color','#333')};
-                    border-radius:12px; padding:1.2rem 1.4rem; margin-bottom:1.5rem;">
-            <div style="font-size:0.75rem; font-weight:600; text-transform:uppercase;
-                        letter-spacing:0.08em; color:{seg_info.get('color','#333')}; margin-bottom:0.3rem;">
-                {seg_info.get('icon','')} Your school profile
+        seg_col, seg_list_col, cat_col = st.columns([3, 2, 1.5])
+        with seg_col:
+            st.markdown(f"""
+            <div style="background:{seg_info.get('color','#333')}15; border:2px solid {seg_info.get('color','#333')};
+                        border-radius:12px; padding:1.2rem 1.4rem; margin-bottom:1.5rem; height:100%;">
+                <div style="font-size:0.75rem; font-weight:600; text-transform:uppercase;
+                            letter-spacing:0.08em; color:{seg_info.get('color','#333')}; margin-bottom:0.3rem;">
+                    {seg_info.get('icon','')} Your school profile
+                </div>
+                <div style="font-family:'DM Serif Display',serif; font-size:1.6rem;
+                            color:#0F2A1D; line-height:1.2; margin-bottom:0.4rem;">
+                    {seg_name}
+                </div>
+                <div style="font-size:0.85rem; color:#4A6355;">
+                    {seg_info.get('desc','')}
+                </div>
+                <div style="font-size:0.82rem; color:#374151; margin-top:0.5rem; line-height:1.5;">
+                    {seg_rationale}
+                </div>
+                <div style="font-size:0.75rem; color:#9CA3AF; margin-top:0.5rem;">
+                    Confidence: {seg_conf}% | Based on your diagnostic inputs
+                </div>
+                <div style="font-size:0.8rem; color:#374151; margin-top:0.6rem; border-top:1px solid #E5E7EB; padding-top:0.5rem;">
+                    The interventions below prioritise <b>{top_priority}</b> to match your school's profile.
+                </div>
             </div>
-            <div style="font-family:'DM Serif Display',serif; font-size:1.6rem;
-                        color:#0F2A1D; line-height:1.2; margin-bottom:0.4rem;">
-                {seg_name}
-            </div>
-            <div style="font-size:0.85rem; color:#4A6355;">
-                {seg_info.get('desc','')}
-            </div>
-            <div style="font-size:0.82rem; color:#374151; margin-top:0.5rem; line-height:1.5;">
-                {seg_rationale}
-            </div>
-            <div style="font-size:0.75rem; color:#9CA3AF; margin-top:0.5rem;">
-                Confidence: {seg_conf}% | Based on your diagnostic inputs
-            </div>
-            <div style="font-size:0.8rem; color:#374151; margin-top:0.6rem; border-top:1px solid #E5E7EB; padding-top:0.5rem;">
-                The interventions below prioritise <b>{top_priority}</b> to match your school's profile.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+        with seg_list_col:
+            _seg_color = seg_info.get('color', '#333')
+            _segs_html = '<div style="margin-bottom:0.4rem; font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:#6B7280;">School profiles</div>'
+            for _sname, _sdata in SEGMENT_INFO.items():
+                if _sname == seg_name:
+                    _segs_html += f"""
+                    <div style="border-left:3px solid {_sdata['color']}; background:{_sdata['color']}12;
+                                padding:0.4rem 0.6rem; border-radius:6px; margin-bottom:0.4rem;
+                                font-size:0.78rem; color:#1F2937; display:flex; align-items:center; gap:0.4rem;">
+                        <span>{_sdata['icon']}</span>
+                        <b>{_sname}</b>
+                    </div>"""
+                else:
+                    _segs_html += f"""
+                    <div style="border-left:3px solid #E5E7EB; background:#F9FAFB;
+                                padding:0.4rem 0.6rem; border-radius:6px; margin-bottom:0.4rem;
+                                font-size:0.78rem; color:#9CA3AF; display:flex; align-items:center; gap:0.4rem;">
+                        <span>{_sdata['icon']}</span>
+                        {_sname}
+                    </div>"""
+            st.markdown(_segs_html, unsafe_allow_html=True)
+        with cat_col:
+            _priorities = seg_info.get('priorities', [])
+            _all_cats = [
+                ('learning_support',   '📚', 'Learning Support'),
+                ('climate_support',    '🤝', 'Climate Support'),
+                ('family_engagement',  '👨‍👩‍👧', 'Family Engagement'),
+                ('resource_intensive', '💼', 'Resource Intensive'),
+            ]
+            _pills_html = '<div style="margin-bottom:0.4rem; font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:#6B7280;">Intervention focus</div>'
+            for _cat_key, _cat_icon, _cat_label in _all_cats:
+                if _cat_key in _priorities:
+                    _rank = _priorities.index(_cat_key) + 1
+                    _pills_html += f"""
+                    <div style="border-left:3px solid {_seg_color}; background:#fff;
+                                padding:0.4rem 0.6rem; border-radius:6px; margin-bottom:0.45rem;
+                                font-size:0.78rem; color:#1F2937; display:flex;
+                                justify-content:space-between; align-items:center;">
+                        <span>{_cat_icon} <b>{_cat_label}</b></span>
+                        <span style="font-size:0.65rem; color:{_seg_color}; white-space:nowrap; margin-left:0.3rem;">#{_rank}</span>
+                    </div>"""
+                else:
+                    _pills_html += f"""
+                    <div style="border-left:3px solid #E5E7EB; background:#F9FAFB;
+                                padding:0.4rem 0.6rem; border-radius:6px; margin-bottom:0.45rem;
+                                font-size:0.78rem; color:#9CA3AF;">
+                        {_cat_icon} {_cat_label}
+                    </div>"""
+            st.markdown(_pills_html, unsafe_allow_html=True)
 
         traj = risk_result['trajectory']
 
@@ -1095,47 +1160,39 @@ with tab2:
         st.caption(
             f'The equity gap for {country} is {country_gap} pts — '
             f'the maths score difference between the most and least advantaged 25% of students. '
-            f'Cards 2 and 4 show how much of this gap your school can close.'
+            f'Cards 3 and 4 show how much of this gap your school can close.'
         )
+
+        _card_center = 'display:flex; flex-direction:column; height:100%; justify-content:center; align-items:center; text-align:center;'
 
         m1, m2, m3, m4 = st.columns(4)
         with m1:
             st.markdown(f"""
-            <div class="metric-card" style="display:flex; flex-direction:column; height:100%;">
+            <div class="metric-card" style="{_card_center}">
                 <div class="metric-label">Equity risk score <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:0.7rem;">(0–100 composite index)</span></div>
                 <div class="metric-value {risk_class}">{risk_score}<span style="font-size:1rem">/100</span></div>
                 <div class="metric-sub">{risk_label}</div>
-                <div style="display:flex; height:6px; border-radius:3px; overflow:hidden; margin-top:0.65rem;">
-                    <div style="width:{gap_score}%; background:#2F6690;"></div>
-                    <div style="width:{traj_score}%; background:#EF9F27;"></div>
-                    <div style="width:{school_score}%; background:#6B5CA5;"></div>
-                </div>
-                <div style="font-size:0.68rem; color:#6B7280; margin-top:0.35rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-                    <span style="color:#2F6690;">&#9632; Gap: {gap_score}</span>
-                    <span style="color:#EF9F27;">&#9632; Trend: {traj_score}</span>
-                    <span style="color:#6B5CA5;">&#9632; School: {school_score}</span>
-                </div>
             </div>
             """, unsafe_allow_html=True)
         with m2:
             st.markdown(f"""
-            <div class="metric-card" style="display:flex; flex-direction:column; height:100%;">
-                <div class="metric-label">Gap already being closed <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:0.7rem;">(by existing practices)</span></div>
-                <div class="metric-value risk-low">–{mitigation_credit}<span style="font-size:1rem"> pts</span></div>
-                <div class="metric-sub">{mit_sub}</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with m3:
-            st.markdown(f"""
-            <div class="metric-card" style="display:flex; flex-direction:column; height:100%;">
+            <div class="metric-card" style="{_card_center}">
                 <div class="metric-label">National trajectory</div>
                 <div class="metric-value {traj_class}">{traj_arrow} {traj}</div>
                 <div class="metric-sub">Gap trend 2009–2022</div>
             </div>
             """, unsafe_allow_html=True)
+        with m3:
+            st.markdown(f"""
+            <div class="metric-card" style="{_card_center}">
+                <div class="metric-label">Gap already being closed <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:0.7rem;">(by existing practices)</span></div>
+                <div class="metric-value risk-low">–{mitigation_credit}<span style="font-size:1rem"> pts</span></div>
+                <div class="metric-sub">{mit_sub}</div>
+            </div>
+            """, unsafe_allow_html=True)
         with m4:
             st.markdown(f"""
-            <div class="metric-card" style="display:flex; flex-direction:column; height:100%;">
+            <div class="metric-card" style="{_card_center}">
                 <div class="metric-label">Additional gap closable <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:0.7rem;">(recommended interventions)</span></div>
                 <div class="metric-value risk-low">–{realistic_reduction}<span style="font-size:1rem"> pts</span></div>
                 <div class="metric-sub">Projected gap: {projected_gap} pts (from {country_gap} pts baseline)</div>
@@ -1154,14 +1211,20 @@ with tab2:
             n_schools = len(df_country)
             country_median = round(float(df_country['EQUITY_RISK_SCORE'].median()), 1)
 
-            # Dynamic axis range: data extent ± 10% of spread, clamped to 0–100
+            # Percentile: % of country schools with score ≤ user's score
+            _pct = round(float((df_country['EQUITY_RISK_SCORE'] <= risk_score).mean() * 100), 1)
+            _pct_label = f'{_pct}th' if not (11 <= int(_pct) % 100 <= 13) else f'{_pct}th'
+            _pct_suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(int(_pct) % 10, 'th') if not (11 <= int(_pct) % 100 <= 13) else 'th'
+            _pct_display = f'{_pct:.0f}{_pct_suffix}'
+
+            # Dynamic axis: always include user's score
             scores = df_country['EQUITY_RISK_SCORE']
             spread = scores.max() - scores.min()
             pad = max(spread * 0.12, 3)
-            x_min = max(0,   round(scores.min() - pad, 1))
-            x_max = min(100, round(scores.max() + pad, 1))
+            x_min = max(0,   round(min(scores.min(), risk_score) - pad, 1))
+            x_max = min(100, round(max(scores.max(), risk_score) + pad, 1))
 
-            dist_col, box_col = st.columns(2)
+            dist_col, profile_col = st.columns(2)
 
             with dist_col:
                 fig_dist = go.Figure()
@@ -1183,7 +1246,7 @@ with tab2:
                 ))
                 fig_dist.add_vline(
                     x=risk_score, line_color='#0F2A1D', line_width=2.5,
-                    annotation_text=f'Your school: {risk_score}',
+                    annotation_text=f'Your school: {risk_score} ({_pct_display} pct.)',
                     annotation_position='top',
                     annotation_font=dict(color='#0F2A1D', size=11, family='DM Sans')
                 )
@@ -1210,59 +1273,59 @@ with tab2:
                     showlegend=False, font=dict(family='DM Sans', color='#374151')
                 )
                 st.plotly_chart(fig_dist, use_container_width=True)
-                st.caption(f'n = {n_schools} schools in {country} · PISA 2022')
+                st.caption(
+                    f'n = {n_schools} schools in {country} · PISA 2022 · '
+                    f'Your school is in the {_pct_display} percentile · '
+                    f'Scores based on self-reported inputs vs PISA-measured values for comparison schools'
+                )
 
-            with box_col:
-                schtype_map = {1.0: 'Public', 2.0: 'Gov-dependent private', 3.0: 'Independent private'}
-                type_colors = {
-                    'Public': '#2F6690',
-                    'Gov-dependent private': '#D96C06',
-                    'Independent private': '#6B5CA5'
+            with profile_col:
+                _components = {
+                    'Country gap':    (gap_score,    50,  '#2F6690'),
+                    'Trend':          (traj_score,   20,  '#EF9F27'),
+                    'School profile': (school_score, 30,  '#6B5CA5'),
                 }
-                df_box = df_country.dropna(subset=['SCHTYPE']).copy()
-                df_box['School Type'] = df_box['SCHTYPE'].map(schtype_map).fillna('Other')
-
-                # Dynamic y-range across all school types
-                box_scores = df_box['EQUITY_RISK_SCORE']
-                bpad = max((box_scores.max() - box_scores.min()) * 0.15, 3)
-                y_min = max(0,   round(box_scores.min() - bpad, 1))
-                y_max = min(100, round(box_scores.max() + bpad, 1))
-
-                fig_box = go.Figure()
-                for stype in ['Public', 'Gov-dependent private', 'Independent private']:
-                    grp = df_box[df_box['School Type'] == stype]
-                    if len(grp) == 0:
-                        continue
-                    fig_box.add_trace(go.Box(
-                        y=grp['EQUITY_RISK_SCORE'],
-                        name=stype,
-                        marker_color=type_colors[stype],
-                        boxpoints='outliers',
-                        marker=dict(size=3, opacity=0.5),
-                        boxmean='sd',
-                        hovertemplate=f'<b>{stype}</b><br>Score: %{{y:.1f}}<extra></extra>'
+                fig_breakdown = go.Figure()
+                for _cname, (_cval, _cmax, _ccol) in _components.items():
+                    # Background bar (max possible)
+                    fig_breakdown.add_trace(go.Bar(
+                        y=[_cname], x=[_cmax],
+                        orientation='h',
+                        marker_color='#F3F4F6',
+                        showlegend=False,
+                        hoverinfo='skip',
                     ))
-                fig_box.add_hline(
-                    y=risk_score, line_color='#0F2A1D', line_width=2, line_dash='dot',
-                    annotation_text=f'Your school: {risk_score}',
-                    annotation_position='right',
-                    annotation_font=dict(color='#0F2A1D', size=10, family='DM Sans')
-                )
-                fig_box.update_layout(
-                    title=dict(text=f'Risk score by school type — {country}',
+                    # Filled bar (actual value)
+                    fig_breakdown.add_trace(go.Bar(
+                        y=[_cname], x=[_cval],
+                        orientation='h',
+                        marker_color=_ccol,
+                        showlegend=False,
+                        text=f'{_cval}',
+                        textposition='outside',
+                        textfont=dict(color=_ccol, size=12, family='DM Sans'),
+                        hovertemplate=f'<b>{_cname}</b>: {_cval} / {_cmax}<extra></extra>',
+                    ))
+                fig_breakdown.update_layout(
+                    barmode='overlay',
+                    title=dict(text='Risk score breakdown',
                                font=dict(size=13, color='#1F2937'), x=0.5, xanchor='center'),
-                    yaxis=dict(
-                        title=dict(text='Equity risk score', font=dict(color='#374151')),
+                    xaxis=dict(
+                        title=dict(text='Score', font=dict(color='#374151')),
                         tickfont=dict(color='#374151'),
-                        range=[y_min, y_max]
+                        range=[0, 55],
                     ),
-                    xaxis=dict(tickfont=dict(color='#374151')),
+                    yaxis=dict(tickfont=dict(color='#1F2937', size=12)),
                     plot_bgcolor='white', paper_bgcolor='white',
-                    height=340, margin=dict(l=40, r=20, t=50, b=40),
-                    showlegend=False, font=dict(family='DM Sans', color='#374151')
+                    height=340, margin=dict(l=20, r=60, t=50, b=40),
+                    font=dict(family='DM Sans', color='#374151'),
+                    showlegend=False,
                 )
-                st.plotly_chart(fig_box, use_container_width=True)
-                st.caption('Box = IQR · centre line = median · dotted = your school · outliers shown · PISA 2022')
+                st.plotly_chart(fig_breakdown, use_container_width=True)
+                st.caption(
+                    f'Country gap (max 50) + Trend (max 20) + School profile (max 30) = {risk_score}/100 · '
+                    f'School profile reflects your reported inputs'
+                )
 
         # ── GAP PROJECTION WATERFALL ──────────────────────────────────────────
         st.markdown('<div class="section-title">Projected gap reduction pathway</div>',
@@ -1323,74 +1386,141 @@ with tab2:
             cost_labels = {1: '£ very low', 2: '££ low', 3: '£££ moderate',
                            4: '££££ high', 5: '£££££ very high'}
 
-            col_int1, col_int2 = st.columns([3, 1])
+            total_in_budget = len(df_rec)
+            avg_evidence = df_rec['evidence'].mean()
+            ic1, ic2, ic3 = st.columns(3)
+            with ic1:
+                st.markdown(f"""
+                <div class="metric-card" style="{_card_center}">
+                    <div class="metric-label">Interventions available</div>
+                    <div class="metric-value">{total_in_budget}</div>
+                    <div class="metric-sub">Within your budget</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with ic2:
+                st.markdown(f"""
+                <div class="metric-card" style="{_card_center}">
+                    <div class="metric-label">Avg evidence strength</div>
+                    <div class="metric-value">{avg_evidence:.1f}<span style="font-size:1rem">/5</span></div>
+                    <div class="metric-sub">Padlocks (EEF scale)</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with ic3:
+                st.markdown(f"""
+                <div class="metric-card" style="{_card_center}">
+                    <div class="metric-label">If top intervention applied</div>
+                    <div class="metric-value risk-low">
+                        –{round(df_rec.iloc[0]['gap_reduction_pts'] * (disadvantaged_pct / 100), 1):.1f}<span style="font-size:1rem"> pts</span>
+                    </div>
+                    <div class="metric-sub">{df_rec.iloc[0]['intervention']} · scaled to your {disadvantaged_pct}% target group</div>
+                </div>
+                """, unsafe_allow_html=True)
 
-            with col_int1:
-                st.caption(
-                    f'Target group: {target_students} disadvantaged students '
-                    f'({disadvantaged_pct}% of {school_size})'
+            st.caption(
+                f'Target group: {target_students} disadvantaged students '
+                f'({disadvantaged_pct}% of {school_size})'
+            )
+
+            _cat_style = {
+                'learning_support':   {'label': '📚 Learning Support',   'color': '#1D4ED8', 'bg': '#EFF6FF'},
+                'climate_support':    {'label': '🤝 Climate Support',    'color': '#065F46', 'bg': '#F0FDF4'},
+                'family_engagement':  {'label': '👨‍👩‍👧 Family Engagement', 'color': '#92400E', 'bg': '#FFFBEB'},
+                'resource_intensive': {'label': '💼 Resource Intensive', 'color': '#6B21A8', 'bg': '#FAF5FF'},
+            }
+
+            def _render_intervention_card(row):
+                realistic_contrib = round(
+                    row['gap_reduction_pts'] * (disadvantaged_pct / 100) * (0.7 ** (row['rank'] - 1)), 1
                 )
-                for _, row in df_rec.iterrows():
-                    # Realistic contribution = EEF impact scaled to target group
-                    # with diminishing returns for each additional intervention
-                    realistic_contrib = round(
-                        row['gap_reduction_pts'] * (disadvantaged_pct / 100) * (0.7 ** (row['rank'] - 1)), 1
-                    )
-                    cost_color = (
-                        'badge-green' if row['cost_rating'] == 1
-                        else 'badge-amber' if row['cost_rating'] <= 3
-                        else 'badge-red'
-                    )
-                    profile_badge = (
-                        '<span style="background:#EFF6FF; color:#1D4ED8; font-size:0.68rem; '
-                        'font-weight:700; padding:2px 7px; border-radius:10px; margin-left:6px;">'
-                        'Profile Match</span>'
-                    ) if row['priority_tier'] == 0 else ''
-                    st.markdown(f"""
-                    <div class="intervention-card">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start">
-                            <div class="intervention-name">
-                                #{int(row['rank'])} {row['intervention']}{profile_badge}
-                            </div>
-                            <div style="text-align:right;">
-                                <div style="font-family:'DM Serif Display',serif; font-size:1.3rem; color:#1D9E75; line-height:1.1;">
-                                    –{realistic_contrib:.1f} pts
-                                </div>
-                                <div style="font-size:0.68rem; color:#9CA3AF;">
-                                    to your equity gap
-                                </div>
-                                <div style="font-size:0.68rem; color:#9CA3AF;">
-                                    EEF raw: –{row['gap_reduction_pts']:.0f} pts
-                                </div>
-                            </div>
+                cost_color = (
+                    'badge-green' if row['cost_rating'] == 1
+                    else 'badge-amber' if row['cost_rating'] <= 3
+                    else 'badge-red'
+                )
+                profile_badge = (
+                    '<span style="background:#EFF6FF; color:#1D4ED8; font-size:0.68rem; '
+                    'font-weight:700; padding:2px 7px; border-radius:10px; margin-left:6px;">'
+                    'Profile Match</span>'
+                ) if row['priority_tier'] == 0 else ''
+                _cs = _cat_style.get(row['category'], {'label': row['category'], 'color': '#6B7280', 'bg': '#F3F4F6'})
+                cat_badge = (
+                    f'<span style="background:{_cs["bg"]}; color:{_cs["color"]}; font-size:0.68rem; '
+                    f'font-weight:600; padding:2px 8px; border-radius:10px; margin-left:6px;">'
+                    f'{_cs["label"]}</span>'
+                )
+                st.markdown(f"""
+                <div class="intervention-card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start">
+                        <div class="intervention-name">
+                            #{int(row['rank'])} {row['intervention']}{profile_badge}{cat_badge}
                         </div>
-                        <div class="intervention-meta" style="margin-top:0.5rem">
-                            <span class="badge {cost_color}">{cost_labels.get(int(row['cost_rating']), '£')}</span>
-                            <span class="badge badge-blue">£{int(row['total_cost']):,} total</span>
-                            <span class="badge badge-gray">Evidence: {evidence_stars.get(int(row['evidence']), '○○○○○')}</span>
-                            <span class="badge badge-gray">{int(row['impact_months'])} months impact</span>
+                        <div style="text-align:right;">
+                            <div style="font-family:'DM Serif Display',serif; font-size:1.3rem; color:#1D9E75; line-height:1.1;">
+                                –{realistic_contrib:.1f} pts
+                            </div>
+                            <div style="font-size:0.68rem; color:#9CA3AF;">
+                                to your equity gap
+                            </div>
+                            <div style="font-size:0.68rem; color:#9CA3AF;">
+                                EEF raw: –{row['gap_reduction_pts']:.0f} pts
+                            </div>
                         </div>
                     </div>
-                    """, unsafe_allow_html=True)
+                    <div class="intervention-meta" style="margin-top:0.5rem">
+                        <span class="badge {cost_color}">{cost_labels.get(int(row['cost_rating']), '£')}</span>
+                        <span class="badge badge-blue">£{int(row['total_cost']):,} total</span>
+                        <span class="badge badge-gray">Evidence: {evidence_stars.get(int(row['evidence']), '○○○○○')}</span>
+                        <span class="badge badge-gray">{int(row['impact_months'])} months impact</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
-                # Over budget items
-                df_over = df_interventions[
-                    (~df_interventions['intervention'].isin(existing)) &
-                    (df_interventions['impact_months'] > 0) &
-                    (df_interventions['evidence'] >= 2) &
-                    (df_interventions['cost_per_pupil'] * round(school_size * disadvantaged_pct / 100) > budget)
-                ].copy()
-                df_over['total_cost'] = df_over['cost_per_pupil'] * round(
-                    school_size * disadvantaged_pct / 100
+            int_rows = list(df_rec.iterrows())
+            left_rows = [r for i, (_, r) in enumerate(int_rows) if i % 2 == 0]
+            right_rows = [r for i, (_, r) in enumerate(int_rows) if i % 2 == 1]
+
+            col_left, col_right = st.columns(2)
+            with col_left:
+                for row in left_rows:
+                    _render_intervention_card(row)
+            with col_right:
+                for row in right_rows:
+                    _render_intervention_card(row)
+
+            # Over budget items
+            df_over = df_interventions[
+                (~df_interventions['intervention'].isin(existing)) &
+                (df_interventions['impact_months'] > 0) &
+                (df_interventions['evidence'] >= 2) &
+                (df_interventions['cost_per_pupil'] * round(school_size * disadvantaged_pct / 100) > budget)
+            ].copy()
+            df_over['total_cost'] = df_over['cost_per_pupil'] * round(
+                school_size * disadvantaged_pct / 100
+            )
+            if len(df_over) > 0:
+                st.markdown(
+                    '<div style="font-size:0.85rem; color:#9CA3AF; '
+                    'margin-top:1rem; margin-bottom:0.5rem">'
+                    '🔒 Over budget — shown for reference</div>',
+                    unsafe_allow_html=True
                 )
-                if len(df_over) > 0:
-                    st.markdown(
-                        '<div style="font-size:0.85rem; color:#9CA3AF; '
-                        'margin-top:1rem; margin-bottom:0.5rem">'
-                        '🔒 Over budget — shown for reference</div>',
-                        unsafe_allow_html=True
-                    )
-                    for _, row in df_over.iterrows():
+                over_rows = list(df_over.iterrows())
+                over_left = [r for i, (_, r) in enumerate(over_rows) if i % 2 == 0]
+                over_right = [r for i, (_, r) in enumerate(over_rows) if i % 2 == 1]
+                ocol_left, ocol_right = st.columns(2)
+                with ocol_left:
+                    for row in over_left:
+                        st.markdown(f"""
+                        <div class="intervention-card over-budget">
+                            <div class="intervention-name">{row['intervention']}</div>
+                            <div class="intervention-meta">
+                                £{int(row['total_cost']):,} total ·
+                                {int(row['impact_months'])} months impact
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                with ocol_right:
+                    for row in over_right:
                         st.markdown(f"""
                         <div class="intervention-card over-budget">
                             <div class="intervention-name">{row['intervention']}</div>
@@ -1401,39 +1531,24 @@ with tab2:
                         </div>
                         """, unsafe_allow_html=True)
 
-            with col_int2:
-                total_in_budget = len(df_rec)
-                avg_evidence = df_rec['evidence'].mean()
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-label">Interventions available</div>
-                    <div class="metric-value">{total_in_budget}</div>
-                    <div class="metric-sub">Within your budget</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Avg evidence strength</div>
-                    <div class="metric-value">{avg_evidence:.1f}<span style="font-size:1rem">/5</span></div>
-                    <div class="metric-sub">Padlocks (EEF scale)</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">If top intervention applied</div>
-                    <div class="metric-value risk-low">
-                        –{round(df_rec.iloc[0]['gap_reduction_pts'] * (disadvantaged_pct / 100), 1):.1f}<span style="font-size:1rem"> pts</span>
-                    </div>
-                    <div class="metric-sub">{df_rec.iloc[0]['intervention']} · scaled to your {disadvantaged_pct}% target group</div>
-                </div>
-                """, unsafe_allow_html=True)
-
         # ── FOOTER ────────────────────────────────────────────────────────────
         st.markdown("""
         <div class="footer-note">
-            <b>Data sources:</b> OECD PISA 2009–2022 (734,122 students, 107 countries, stratified sample) |
-            Education Endowment Foundation Teaching & Learning Toolkit<br>
-            <b>Methodology:</b> Equity gap = maths score difference between top and bottom SES quartile.
-            Risk score weighted by gap size (60%), trajectory (20%) and school profile (20%).
-            Gap reduction applies EEF impact to disadvantaged students only with diminishing returns.
-            Margin of error: ±12.4 PISA points (95% CI).<br>
-            <b>Note:</b> Projections are estimates based on published evidence.
+            <b>Data sources:</b> OECD PISA 2022 school questionnaire (21,629 schools, 80 countries) |
+            OECD PISA 2009–2022 trend data (equity gap trajectories) |
+            Education Endowment Foundation Teaching &amp; Learning Toolkit<br>
+            <b>Equity risk score (0–100):</b> Three components —
+            country gap score (0–50): normalised SES maths gap vs global mean;
+            trajectory score (0–20): Closing=0, Stable=10, Widening=20;
+            school profile score (0–30): OLS regression weights from 15,238 PISA 2022 schools
+            (ability grouping |β|=1.23, school climate |β|=0.89, student bullying |β|=1.47;
+            country fixed effects, clustered standard errors; R²=0.21).<br>
+            <b>Gap reduction:</b> EEF impact estimates applied to disadvantaged students only
+            (target group scaling × disadvantaged %), with diminishing returns (0.7<sup>i</sup> decay)
+            and a 60% cap on total closable gap.<br>
+            <b>Limitations:</b> School profile score uses self-reported inputs; comparison schools reflect
+            PISA-measured values. Regression findings are observational (PISA 2022, cross-sectional)
+            and do not establish causal effects. Projections are estimates based on published EEF evidence.
         </div>
         """, unsafe_allow_html=True)
 
@@ -1769,9 +1884,16 @@ with tab4:
     st.markdown("""
     <div class="insight-box">
         <b>The equity risk score is not a black box.</b><br>
-        It is a transparent formula: <b>60%</b> from your country's SES performance gap (PISA data),
+        It is a transparent, evidence-based formula with three components:
+        <b>50%</b> from your country's SES performance gap (PISA data),
         <b>20%</b> from whether that gap is closing or widening (trajectory),
-        <b>20%</b> from your school's profile (type and student-teacher ratio).<br><br>
+        <b>30%</b> from your school's profile — weighted by OLS regression coefficients
+        from 15,238 PISA 2022 schools.<br><br>
+        The school profile component uses three statistically significant predictors
+        (p&lt;0.05, country-clustered standard errors):
+        ability grouping in maths (β=+1.22), negative school climate (β=+0.89),
+        and student bullying/intimidation (β=−1.47 — bullying compresses the SES gap
+        by uniformly suppressing performance).<br><br>
         The benchmark below tests whether operational school features have genuine predictive power
         for equity outcomes — they do, modestly (F1 0.38–0.59). This is why the risk score
         combines data-derived signals with an interpretable formula rather than using a pure
