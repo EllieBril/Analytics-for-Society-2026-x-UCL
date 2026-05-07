@@ -1061,7 +1061,6 @@ with tab2:
         # ── Segment card ──────────────────────────────────────────────────────
         seg_name = seg_result['segment']
         seg_info = seg_result['info']
-        seg_conf = seg_result['confidence']
         top_priority = seg_info.get('priorities', ['learning support'])[0].replace('_', ' ')
         seg_rationale = SEGMENT_RATIONALE.get(seg_name, '')
         seg_col, seg_list_col, cat_col = st.columns([3, 2, 1.5])
@@ -1084,7 +1083,7 @@ with tab2:
                     {seg_rationale}
                 </div>
                 <div style="font-size:0.75rem; color:#9CA3AF; margin-top:0.5rem;">
-                    Confidence: {seg_conf}% | Based on your diagnostic inputs
+                    Rule-based profile | Based on your diagnostic inputs
                 </div>
                 <div style="font-size:0.8rem; color:#374151; margin-top:0.6rem; border-top:1px solid #E5E7EB; padding-top:0.5rem;">
                     The interventions below prioritise <b>{top_priority}</b> to match your school's profile.
