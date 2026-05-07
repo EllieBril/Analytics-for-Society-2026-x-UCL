@@ -902,7 +902,8 @@ with tab2:
                 unsafe_allow_html=True)
     st.caption('These questions help us identify your school profile and tailor recommendations')
 
-    diag1, diag2, diag3, diag4 = st.columns(4)
+    st.caption('**School profile classifier** — determines which intervention category to prioritise')
+    diag1, diag2, diag3 = st.columns(3)
 
     with diag1:
         from model import _load_segment_bundle
@@ -932,36 +933,10 @@ with tab2:
             help='How much is learning hindered by lack of educational materials?'
         )
 
+    st.caption('**Equity risk score inputs** — fed into the OLS regression weights to compute the school profile score')
+    diag4, diag5, diag6, diag7 = st.columns(4)
+
     with diag4:
-        behaviour_disruption = st.select_slider(
-            'Behaviour disruption',
-            options=[1, 2, 3, 4],
-            value=2,
-            format_func=lambda x: ['', 'Never', 'Some lessons', 'Most lessons', 'Every lesson'][x],
-            help='How often does student behaviour disrupt lessons?'
-        )
-
-    diag5, diag6, diag7, diag_spacer1 = st.columns(4)
-
-    with diag5:
-        bullying_severity = st.select_slider(
-            'Student bullying / intimidation',
-            options=[1, 2, 3, 4],
-            value=2,
-            format_func=lambda x: ['', 'Not at all', 'Very little', 'To some extent', 'A lot'][x],
-            help='How much does student bullying or intimidation hinder learning at your school? (PISA SC061Q05TA)'
-        )
-
-    with diag6:
-        ability_grouping = st.radio(
-            'Ability grouping in maths',
-            options=['No', 'Yes'],
-            index=0,
-            horizontal=True,
-            help='Does your school group students by ability for maths classes? (PISA SC042/SC187)'
-        )
-
-    with diag7:
         computers_per_100 = st.number_input(
             'Computers per 100 students',
             min_value=0,
@@ -971,6 +946,33 @@ with tab2:
             help='How many computers are available for student instruction per 100 students? (PISA RATCMP1). 100 = one device per student.'
         )
         computers_per_student = computers_per_100 / 100
+
+    with diag5:
+        behaviour_disruption = st.select_slider(
+            'Behaviour disruption',
+            options=[1, 2, 3, 4],
+            value=2,
+            format_func=lambda x: ['', 'Never', 'Some lessons', 'Most lessons', 'Every lesson'][x],
+            help='How often does student behaviour disrupt lessons?'
+        )
+
+    with diag6:
+        bullying_severity = st.select_slider(
+            'Student bullying / intimidation',
+            options=[1, 2, 3, 4],
+            value=2,
+            format_func=lambda x: ['', 'Not at all', 'Very little', 'To some extent', 'A lot'][x],
+            help='How much does student bullying or intimidation hinder learning at your school? (PISA SC061Q05TA)'
+        )
+
+    with diag7:
+        ability_grouping = st.radio(
+            'Ability grouping in maths',
+            options=['No', 'Yes'],
+            index=0,
+            horizontal=True,
+            help='Does your school group students by ability for maths classes? (PISA SC042/SC187)'
+        )
 
     st.markdown('<div class="section-title">Current practices</div>',
                 unsafe_allow_html=True)
